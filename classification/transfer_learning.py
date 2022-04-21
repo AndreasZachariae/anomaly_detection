@@ -5,21 +5,20 @@ import keras
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from keras.layers import Dense, GlobalAveragePooling2D
-from keras.applications import MobileNet
+from keras.applications.mobilenet import MobileNet
 from keras.preprocessing import image
 from keras.applications.mobilenet import preprocess_input
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Model
-from keras.optimizers import Adam
 
-data_dir = './data_for_transfer_learning/'
+image_dir = os.path.join(os.getcwd(), "dataset", "augmented_dataset", "bottle", "images")
 batch_size = 32
-img_size = (224, 224)
+img_size = (900, 900)
 
 
 # Lade Training und Validation Bilder aus Ordner
 train_dataset = tf.keras.preprocessing.image_dataset_from_directory(
-    data_dir,
+    image_dir,
     validation_split=0.2,
     subset="training",
     seed=123,
@@ -27,7 +26,7 @@ train_dataset = tf.keras.preprocessing.image_dataset_from_directory(
     batch_size=batch_size)
 
 val_dataset = tf.keras.preprocessing.image_dataset_from_directory(
-    data_dir,
+    image_dir,
     validation_split=0.2,
     subset="validation",
     seed=123,
@@ -52,7 +51,8 @@ plt.show()
 # Data Augmentation durch rotieren und spiegeln
 data_augmentation = tf.keras.Sequential([
     tf.keras.layers.experimental.preprocessing.RandomFlip('horizontal'),
-    tf.keras.layers.experimental.preprocessing.RandomRotation(0.2),
+    tf.keras.layers.experimental.preprocessing.RandomFlip('vertical'),
+    # tf.keras.layers.experimental.preprocessing.RandomRotation(45),
 ])
 
 # Zeige ein Bild in 9 verschiedenen Versionen
@@ -72,13 +72,13 @@ plt.show()
 base_model = MobileNet(weights='imagenet', include_top=False)
 
 # Einzelne neue Layer zum anpassen an eigene Daten hinzufügen
-inputs = tf.keras.Input(shape=(224, 224, 3))
+inputs = tf.keras.Input(shape=(900, 900, 3))
 x = data_augmentation(inputs)
 x = preprocess_input(x)
 x = base_model(x, training=False)
 x = GlobalAveragePooling2D()(x)
 x = Dense(1024, activation='relu')(x)
-outputs = Dense(2, activation='softmax')(x)
+outputs = Dense(1, activation='softmax')(x)
 
 
 # MobileNet und prediction Layer zusammenfügen
@@ -107,7 +107,7 @@ print(model.summary())
 
 base_learning_rate = 0.0001
 model.compile(optimizer=tf.keras.optimizers.Adam(lr=base_learning_rate),
-              loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+              loss=tf.keras.losses.CategoricalCrossentropy(),
               metrics=['accuracy'])
 
 
