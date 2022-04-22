@@ -78,7 +78,7 @@ x = preprocess_input(x)
 x = base_model(x, training=False)
 x = GlobalAveragePooling2D()(x)
 x = Dense(1024, activation='relu')(x)
-outputs = Dense(1, activation='softmax')(x)
+outputs = Dense(4, activation='softmax')(x)
 
 
 # MobileNet und prediction Layer zusammenfügen
@@ -106,8 +106,8 @@ print(model.summary())
 
 
 base_learning_rate = 0.0001
-model.compile(optimizer=tf.keras.optimizers.Adam(lr=base_learning_rate),
-              loss=tf.keras.losses.CategoricalCrossentropy(),
+model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=base_learning_rate),
+              loss=tf.keras.losses.SparseCategoricalCrossentropy(),
               metrics=['accuracy'])
 
 
