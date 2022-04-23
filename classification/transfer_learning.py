@@ -1,18 +1,15 @@
-import pandas as pd
-import numpy as np
 import os
-import keras
 import matplotlib.pyplot as plt
 import tensorflow as tf
-from keras.layers import Dense, GlobalAveragePooling2D
-from keras.applications.mobilenet_v2 import MobileNetV2
-from keras.preprocessing import image
-from keras.applications.mobilenet_v2 import preprocess_input
-from keras.preprocessing.image import ImageDataGenerator
-from keras.models import Model
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.models import Model
 
 # use only cpu
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 image_dir = os.path.join(os.getcwd(), "dataset", "augmented_dataset", "bottle", "images")
 batch_size = 32
@@ -72,7 +69,7 @@ plt.show()
 
 
 # Verwende MobileNet OHNE top layers
-base_model = MobileNetV2(input_shape=(900,900,3), weights='imagenet', include_top=False)
+base_model = MobileNetV2(input_shape=(900, 900, 3), weights='imagenet', include_top=False)
 
 # Einzelne neue Layer zum anpassen an eigene Daten hinzufügen
 inputs = tf.keras.Input(shape=(900, 900, 3))
