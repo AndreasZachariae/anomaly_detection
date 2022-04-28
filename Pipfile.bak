@@ -9,9 +9,6 @@ pandas = "*"
 keras = "*"
 tensorflow = "*"
 matplotlib = "*"
-opencv-contrib-python = "*"
-scipy = "*"
-sklearn = "*"
 
 [dev-packages]
 
