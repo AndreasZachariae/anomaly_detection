@@ -1,6 +1,7 @@
 # Custom
 dataset/**/*.png
 dataset/**/*.txt
+dataset/**/*.xml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
