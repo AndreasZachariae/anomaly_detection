@@ -2,10 +2,10 @@ import os
 import numpy as np
 import pandas as pd
 
+
 class DataLoader():
     def __init__(self, path):
         self.path = path
-        
 
     def get_list_of_files(self):
         """
