@@ -11,23 +11,17 @@ def main():
         print("ERROR: mvtec_anomaly_detection folder not in expected path")
         return
 
-    types = []
-
-    for type_folder in os.listdir(mvtec_path):
-        if type_folder.endswith('.txt'):
-            continue
-
+    for type_name in os.listdir(mvtec_path):
         # only use bottle dataset. remove this if all types should be copied
-        if not type_folder == "bottle":
+        if not type_name == "bottle":
             continue
 
-        types.append(type_folder)
+        if type_name.endswith('.txt'):
+            continue
 
-    # repeat for all types
-    for type in types:
-        type_path = os.path.join(augmented_path, type)
-        ground_truth_path = os.path.join(augmented_path, type, "ground_truth")
-        images_path = os.path.join(augmented_path, type, "images")
+        type_path = os.path.join(augmented_path, type_name)
+        ground_truth_path = os.path.join(augmented_path, type_name, "ground_truth")
+        images_path = os.path.join(augmented_path, type_name, "images")
 
         if not os.path.exists(type_path):
             os.makedirs(type_path)
@@ -35,11 +29,11 @@ def main():
 
         if not os.path.exists(ground_truth_path):
             print("Copy ground truth folder")
-            shutil.copytree(os.path.join(mvtec_path, type, "ground_truth"), ground_truth_path)
+            shutil.copytree(os.path.join(mvtec_path, type_name, "ground_truth"), ground_truth_path)
 
         if not os.path.exists(images_path):
             print("Copy test folder")
-            shutil.copytree(os.path.join(mvtec_path, type, "test"), images_path)
+            shutil.copytree(os.path.join(mvtec_path, type_name, "test"), images_path)
 
         # Rename exising good images to xxx_test
         for file in os.listdir(os.path.join(images_path, "good")):
@@ -53,8 +47,8 @@ def main():
             os.rename(os.path.join(images_path, "good", file), os.path.join(images_path, "good", new_name))
 
         # Copy all train images to same folder as good test images
-        for file in os.listdir(os.path.join(mvtec_path, type, "train", "good")):
-            src = os.path.join(mvtec_path, type, "train", "good", file)
+        for file in os.listdir(os.path.join(mvtec_path, type_name, "train", "good")):
+            src = os.path.join(mvtec_path, type_name, "train", "good", file)
             dest = os.path.join(images_path, "good", file)
             shutil.copy2(src, dest)
 
