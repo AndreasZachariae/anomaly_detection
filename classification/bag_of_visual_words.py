@@ -248,21 +248,20 @@ class BagOfVisualWords():
         # count the images per class
         occ = collections.Counter(img_classes)
         print(f"Found {len(img_classes)} images:")
-        num_defect_classes = float(len(occ.keys())-1)
-        num_defect_per_class = 0
-        for key in occ:
-            if key != self.class_dict["good"]:
-                num_defect_per_class += occ[key] 
-            print(f"- {occ[key]} images of class \"{self.class_dict[key]}\".")
         
-        # make sure there is about the same amount of good images compared to
-        # other (anomalous) classes in the dataset
-        mean_num = round(num_defect_per_class/num_defect_classes)
-        pos_good = np.where(img_classes == self.class_dict["good"])[0]
-        random_good = np.random.choice(pos_good, pos_good.shape[0]-mean_num, replace=False)
-        img_paths = np.delete(img_paths, random_good)
-        img_classes = np.delete(img_classes, random_good)
-        print(f"Using only {mean_num} random \"good\" images.")
+        # make sure there is about the same amount of images per class
+        values = np.array(list(occ.values()))
+        var_coeff = np.std(values)/np.mean(values)
+        for key in occ:
+            print(f"- {occ[key]} images of class \"{self.class_dict[key]}\".")
+        if var_coeff >= 0.1:
+            max_imgs = min(values)
+            for key in occ:
+                pos = np.where(img_classes == key)[0]
+                random_indices = np.random.choice(pos, pos.shape[0]-max_imgs, replace=False)
+                img_paths = np.delete(img_paths, random_indices)
+                img_classes = np.delete(img_classes, random_indices)
+            print(f"Using only {max_imgs} images per class.")           
             
         return (img_paths, img_classes)
        

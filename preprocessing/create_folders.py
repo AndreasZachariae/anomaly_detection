@@ -8,7 +8,7 @@ def main():
     augmented_path = os.path.join(cwd, "dataset", "augmented_dataset")
 
     if not os.path.exists(mvtec_path):
-        print("ERROR: mvtec_anomaly_detection folder not in expected path")
+        print("ERROR: mvtec_anomaly_dataset folder not in expected path")
         return
 
     for type_name in os.listdir(mvtec_path):
