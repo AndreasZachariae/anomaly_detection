@@ -90,10 +90,10 @@ class BoxCreator():
         folder.text = path_split[-2]
         
         filename = SubElement(annotation, "filename")
-        filename.text = path_split[-1].replace("_mask.png", ".png")
+        filename.text = path_split[-1].replace("_mask", "")
         
         path_elem = SubElement(annotation, "path")
-        path_elem.text = proj_path.replace("ground_truth", "images").replace("_mask.png", ".png")
+        path_elem.text = proj_path.replace("ground_truth", "images").replace("_mask", "")
         
         source = SubElement(annotation, "source")
         database = SubElement(source, "database")
@@ -131,7 +131,7 @@ class BoxCreator():
             ymax.text = str(b[4])
         
         tree = ElementTree(annotation)
-        xml_path = path.replace("_mask.png", "_annotation.xml")
+        xml_path = path.replace(".png", "_annotation.xml")
         tree.write(xml_path)
         
         
