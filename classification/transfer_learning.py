@@ -3,19 +3,30 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
-from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input as preprocess_mobilenetv2
+from tensorflow.keras.applications.resnet50 import ResNet50
+from tensorflow.keras.applications.resnet50 import preprocess_input as preprocess_resnet50
 from tensorflow.keras.models import Model
 
 
-class TransferMobileNetV2():
-    """Takes the MobilenetV2 model with pretrained weights from imagenet.
+class TransferLearning():
+    """Takes the specified model with pretrained weights from imagenet.
     Trains the last layers with custom dataset.
     """
 
-    def __init__(self, image_path, image_size, batch_size, only_cpu):
+    def __init__(self, model, image_path, image_size, batch_size, only_cpu):
         self.train_dataset, self.val_dataset = self.load_data(image_path, image_size, batch_size)
         self.accuracy = None
         self.loss = None
+
+        if model == "resnet50":
+            self.base_model = ResNet50(input_shape=(900, 900, 3), weights='imagenet', include_top=False)
+            self.preprocess_input = preprocess_resnet50
+        elif model == "mobilenetv2":
+            self.base_model = MobileNetV2(input_shape=(900, 900, 3), weights='imagenet', include_top=False)
+            self.preprocess_input = preprocess_mobilenetv2
+        else:
+            print("Model string wrong. Use one of these models:\nresnet50, mobilenetv2")
 
         if only_cpu:
             os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
@@ -66,23 +77,21 @@ class TransferMobileNetV2():
         plt.show()
 
     def train(self, learning_rate):
-        """Takes the MobileNetV2 model without top layers.
+        """Takes the specified model without top layers.
         Add Pooliung and Sense layers to be trained with new data.
         Starts training process.
 
         Args:
             learning_rate (float): Learning rate to apply
         """
-        base_model = MobileNetV2(input_shape=(900, 900, 3), weights='imagenet', include_top=False)
-
         inputs = tf.keras.Input(shape=(900, 900, 3))
-        x = preprocess_input(inputs)
-        x = base_model(x, training=False)
+        x = self.preprocess_input(inputs)
+        x = self.base_model(x, training=False)
         x = GlobalAveragePooling2D()(x)
         x = Dense(1024, activation='relu')(x)
         outputs = Dense(4, activation='softmax')(x)
 
-        # MobileNet und prediction Layer zusammenfügen
+        # Base model und prediction Layer zusammenfügen
         model = Model(inputs=inputs, outputs=outputs)
 
         # Nur neue Layer sollen trainierbar sein
@@ -120,7 +129,16 @@ class TransferMobileNetV2():
 def main():
     path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", "bottle", "images")
 
-    model = TransferMobileNetV2(image_path=path, image_size=(900, 900), batch_size=32, only_cpu=False)
+    model = TransferLearning(model="resnet50",
+                             image_path=path,
+                             image_size=(900, 900),
+                             batch_size=32,
+                             only_cpu=False)
+
+    # Best learning rates:
+    # mobilenet_v2 = 0.0005
+    # resnet50 =
+
     model.show_example_images()
     model.train(learning_rate=0.0005)
     model.plot_metrics()
