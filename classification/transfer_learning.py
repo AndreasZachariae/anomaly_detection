@@ -6,7 +6,9 @@ from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input as preprocess_mobilenetv2
 from tensorflow.keras.applications.resnet50 import ResNet50
 from tensorflow.keras.applications.resnet50 import preprocess_input as preprocess_resnet50
-from tensorflow.keras.models import Model
+from tensorflow.keras.applications.inception_resnet_v2 import InceptionResNetV2
+from tensorflow.keras.applications.inception_resnet_v2 import preprocess_input as preprocess_inceptionresnetv2
+from tensorflow.keras.models import Model, load_model
 
 
 class TransferLearning():
@@ -14,22 +16,23 @@ class TransferLearning():
     Trains the last layers with custom dataset.
     """
 
-    def __init__(self, model, image_path, image_size, batch_size, only_cpu):
-        self.train_dataset, self.val_dataset = self.load_data(image_path, image_size, batch_size)
-        self.accuracy = None
-        self.loss = None
-
-        if model == "resnet50":
-            self.base_model = ResNet50(input_shape=(900, 900, 3), weights='imagenet', include_top=False)
-            self.preprocess_input = preprocess_resnet50
-        elif model == "mobilenetv2":
-            self.base_model = MobileNetV2(input_shape=(900, 900, 3), weights='imagenet', include_top=False)
-            self.preprocess_input = preprocess_mobilenetv2
-        else:
-            print("Model string wrong. Use one of these models:\nresnet50, mobilenetv2")
-
+    def __init__(self, base_model, image_path, image_size, batch_size, only_cpu, model_path=None):
         if only_cpu:
             os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+            print("Disabled GPU devices")
+
+        self.train_dataset, self.val_dataset = self.load_data(image_path, image_size, batch_size)
+
+        if model_path is not None:
+            self.model = load_model(model_path)
+            print("Trained model loaded")
+        else:
+            self.model = self.create_model(base_model)
+            print("Use pretrained base model and train new layers")
+        print(self.model.summary())
+
+        self.accuracy = None
+        self.loss = None
 
     def load_data(self, image_path, image_size, batch_size):
         """Splits dataset in validation and training data 20/80%
@@ -61,6 +64,45 @@ class TransferLearning():
 
         return train_dataset, val_dataset
 
+    def create_model(self, base_model):
+        """Creates the model from specified pretrained base model without top layer.
+        Add two fully connected layers to train with dataset on custom classes
+
+        Args:
+            base_model (String): Model to load from tf.keras.applications
+
+        Returns:
+            Keras Model: Complete model to be trained
+        """
+        if base_model == "resnet50":
+            base_model = ResNet50(input_shape=(900, 900, 3), weights='imagenet', include_top=False)
+            preprocess_input = preprocess_resnet50
+        elif base_model == "mobilenetv2":
+            base_model = MobileNetV2(input_shape=(900, 900, 3), weights='imagenet', include_top=False)
+            preprocess_input = preprocess_mobilenetv2
+        elif base_model == "inceptionresnetv2":
+            base_model = InceptionResNetV2(input_shape=(900, 900, 3), weights='imagenet', include_top=False)
+            preprocess_input = preprocess_inceptionresnetv2
+        else:
+            print("Model string wrong. Use one of these models:\nresnet50, mobilenetv2, inceptionresnetv2")
+
+        inputs = tf.keras.Input(shape=(900, 900, 3))
+        x = preprocess_input(inputs)
+        x = base_model(x, training=False)
+        x = GlobalAveragePooling2D()(x)
+        x = Dense(1024, activation='relu')(x)
+        outputs = Dense(4, activation='softmax')(x)
+
+        model = Model(inputs=inputs, outputs=outputs)
+
+        for layer in model.layers[:-3]:
+            layer.trainable = False
+        for layer in model.layers[-3:]:
+            layer.trainable = True
+        
+        return model
+
+
     def show_example_images(self):
         """Plots a figure with 3*3 example images from the training dataset
         """
@@ -77,36 +119,17 @@ class TransferLearning():
         plt.show()
 
     def train(self, learning_rate):
-        """Takes the specified model without top layers.
-        Add Pooliung and Sense layers to be trained with new data.
-        Starts training process.
+        """Compile the model and train on dataset with specified learning rate.
 
         Args:
             learning_rate (float): Learning rate to apply
         """
-        inputs = tf.keras.Input(shape=(900, 900, 3))
-        x = self.preprocess_input(inputs)
-        x = self.base_model(x, training=False)
-        x = GlobalAveragePooling2D()(x)
-        x = Dense(1024, activation='relu')(x)
-        outputs = Dense(4, activation='softmax')(x)
 
-        # Base model und prediction Layer zusammenfügen
-        model = Model(inputs=inputs, outputs=outputs)
-
-        # Nur neue Layer sollen trainierbar sein
-        for layer in model.layers[:-3]:
-            layer.trainable = False
-        for layer in model.layers[-3:]:
-            layer.trainable = True
-
-        print(model.summary())
-
-        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
+        self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
                       loss=tf.keras.losses.SparseCategoricalCrossentropy(),
                       metrics=['accuracy'])
 
-        history = model.fit(self.train_dataset,
+        history = self.model.fit(self.train_dataset,
                             validation_data=self.val_dataset,
                             epochs=5)
 
@@ -117,31 +140,65 @@ class TransferLearning():
         """Plot loss and accuracy over epochs
         """
         plt.figure(figsize=(8, 8))
-        plt.plot(self.accuracy, label='Training Accuracy')
-        plt.plot(self.loss, label='Training Loss')
+        plt.plot(self.accuracy, label='Training Accuracy', marker="x")
+        plt.plot(self.loss, label='Training Loss', marker="o")
         plt.legend(loc='lower left')
         plt.ylabel('Accuracy')
         plt.ylim([min(plt.ylim()), 1])
         plt.title('Training Accuracy and Loss')
         plt.show()
 
+    def save_model(self, model_path):
+        """Wrapper for Keras Model save function
+
+        Args:
+            model_path (String): path to save model.h5 file
+        """
+        self.model.save(model_path)
+
+    def predict(self, image):
+        """Wrapper for Keras Model predict function
+
+        Args:
+            image (np.array): Datapoint to predict on
+
+        Returns:
+            class(int): Predicted class value
+        """
+        return self.model.predict(image)
+
+    def evaluate(self):
+        """Test model on evaluation dataset
+
+        Returns:
+            dict: dict with two keys: accuracy, loss
+        """
+        result = self.model.evaluate(self.val_dataset, return_dict=True)
+        self.accuracy = result['accuracy']
+        self.loss = result['loss']
+
+        return result
+
 
 def main():
     path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", "bottle", "images")
 
-    model = TransferLearning(model="resnet50",
+    model = TransferLearning(base_model="inceptionresnetv2",
                              image_path=path,
                              image_size=(900, 900),
-                             batch_size=32,
-                             only_cpu=False)
+                             batch_size=16,
+                             only_cpu=True,
+                             model_path=None)
 
     # Best learning rates:
-    # mobilenet_v2 = 0.0005
-    # resnet50 =
+    # mobilenetv2 = 0.0005
+    # resnet50 = 0.001
 
-    model.show_example_images()
+    # model.show_example_images()
     model.train(learning_rate=0.0005)
+    # model.evaluate()
     model.plot_metrics()
+    model.save_model(model_path="models/inceptionresnetv2.h5")
 
     # model.predict(new_image)
 
