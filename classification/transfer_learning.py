@@ -1,7 +1,8 @@
 import os
 import matplotlib.pyplot as plt
+import cv2
 import tensorflow as tf
-from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Dropout
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input as preprocess_mobilenetv2
 from tensorflow.keras.applications.resnet50 import ResNet50
@@ -90,15 +91,13 @@ class TransferLearning():
         x = preprocess_input(inputs)
         x = base_model(x, training=False)
         x = GlobalAveragePooling2D()(x)
-        x = Dense(1024, activation='relu')(x)
+        # x = Dropout(0.2)(x)
+        # x = Dense(1024, activation='relu')(x)
         outputs = Dense(4, activation='softmax')(x)
 
         model = Model(inputs=inputs, outputs=outputs)
 
-        for layer in model.layers[:-3]:
-            layer.trainable = False
-        for layer in model.layers[-3:]:
-            layer.trainable = True
+        base_model.trainable = False
         
         return model
 
@@ -136,6 +135,10 @@ class TransferLearning():
         self.accuracy = history.history['accuracy']
         self.loss = history.history['loss']
 
+    def fine_tuning(self, learning_rate):
+        self.model.trainable = True
+        self.train(learning_rate)
+
     def plot_metrics(self):
         """Plot loss and accuracy over epochs
         """
@@ -148,24 +151,35 @@ class TransferLearning():
         plt.title('Training Accuracy and Loss')
         plt.show()
 
-    def save_model(self, model_path):
+    def save_model(self, model_name):
         """Wrapper for Keras Model save function
 
         Args:
-            model_path (String): path to save model.h5 file
+            model_name (String): Name to save model.h5 file
         """
-        self.model.save(model_path)
+        path = os.path.join("models", model_name + "_acc" + str(round(self.accuracy*100)) + ".h5")
+        self.model.save(path, save_format='h5')
 
-    def predict(self, image):
+    def predict(self, image_path):
         """Wrapper for Keras Model predict function
 
         Args:
-            image (np.array): Datapoint to predict on
+            image_path (Sring): Path to image to predict
 
         Returns:
-            class(int): Predicted class value
+            prediction(np.array): array of probabilities for each class
+            class_index(int): argmax of prediction array
+            class_name(String): name of class index
+            image(cv2.Mat): predicted imagfe to display
         """
-        return self.model.predict(image)
+        image = cv2.imread(image_path)
+        tensor = tf.convert_to_tensor(image, dtype=tf.float32)
+        tensor = tf.expand_dims(tensor, 0)
+        prediction = self.model.predict(tensor)
+        class_index = int(tf.math.argmax(prediction,1))
+        class_name = self.train_dataset.class_names[class_index]
+
+        return prediction, class_index, class_name, image
 
     def evaluate(self):
         """Test model on evaluation dataset
@@ -183,24 +197,27 @@ class TransferLearning():
 def main():
     path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", "bottle", "images")
 
-    model = TransferLearning(base_model="inceptionresnetv2",
+    model = TransferLearning(base_model="resnet50",
                              image_path=path,
                              image_size=(900, 900),
                              batch_size=16,
                              only_cpu=True,
-                             model_path=None)
+                             model_path="models/resnet50.h5")
 
     # Best learning rates:
     # mobilenetv2 = 0.0005
     # resnet50 = 0.001
 
     # model.show_example_images()
-    model.train(learning_rate=0.0005)
-    # model.evaluate()
+    # model.train(learning_rate=0.0005)
+    model.evaluate()
     model.plot_metrics()
-    model.save_model(model_path="models/inceptionresnetv2.h5")
+    model.save_model(model_name="resnet50")
 
-    # model.predict(new_image)
+    prediction, class_index, class_name, image = model.predict(os.path.join(path, "good", "000.png"))
+    print(prediction)
+    cv2.imshow("predicted_class="+class_name, image)
+    cv2.waitKey(0)
 
 
 if __name__ == "__main__":
