@@ -17,12 +17,17 @@ class TransferLearning():
     Trains the last layers with custom dataset.
     """
 
-    def __init__(self, base_model, image_path, image_size, batch_size, only_cpu, model_path=None):
+    def __init__(self, base_model, only_cpu, model_path=None):
+        """Initialize model with base model or use pretrained model if path is given
+
+        Args:
+            base_model (String): Name of base model to use
+            only_cpu (Bool): Flag to set CUDA_VISIBLE_DEVICES
+            model_path (String, optional): Path to pretrained model. Defaults to None.
+        """
         if only_cpu:
             os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
             print("Disabled GPU devices")
-
-        self.train_dataset, self.val_dataset = self.load_data(image_path, image_size, batch_size)
 
         if model_path is not None:
             self.model = load_model(model_path)
@@ -32,38 +37,36 @@ class TransferLearning():
             print("Use pretrained base model and train new layers")
         print(self.model.summary())
 
+        self.train_dataset = None
+        self.val_dataset = None
         self.accuracy = None
         self.loss = None
 
-    def load_data(self, image_path, image_size, batch_size):
-        """Splits dataset in validation and training data 20/80%
+    def load_data(self, image_path, image_size, batch_size, validation_split=0.2):
+        """Splits dataset in validation and training data default=20/80%
 
         Args:
             image_path (string): Path with all class folders
             image_size (tupel): Size of image
             batch_size (int): Number of images per training step
-
-        Returns:
-            train_dataset: 80% of dataset
-            val_dataset: Validation 20% of dataset
+            validation_split (float): Percentage to split between test and train data
         """
-        train_dataset = tf.keras.preprocessing.image_dataset_from_directory(
+        self.train_dataset = tf.keras.preprocessing.image_dataset_from_directory(
             image_path,
-            validation_split=0.2,
+            validation_split=validation_split,
             subset="training",
             seed=123,
             image_size=image_size,
             batch_size=batch_size)
 
-        val_dataset = tf.keras.preprocessing.image_dataset_from_directory(
+        self.val_dataset = tf.keras.preprocessing.image_dataset_from_directory(
             image_path,
-            validation_split=0.2,
+            validation_split=validation_split,
             subset="validation",
             seed=123,
             image_size=image_size,
             batch_size=batch_size)
 
-        return train_dataset, val_dataset
 
     def create_model(self, base_model):
         """Creates the model from specified pretrained base model without top layer.
@@ -170,14 +173,18 @@ class TransferLearning():
             prediction(np.array): array of probabilities for each class
             class_index(int): argmax of prediction array
             class_name(String): name of class index
-            image(cv2.Mat): predicted imagfe to display
+            image(cv2.Mat): predicted image to display
         """
         image = cv2.imread(image_path)
         tensor = tf.convert_to_tensor(image, dtype=tf.float32)
         tensor = tf.expand_dims(tensor, 0)
         prediction = self.model.predict(tensor)
         class_index = int(tf.math.argmax(prediction,1))
-        class_name = self.train_dataset.class_names[class_index]
+
+        if self.train_dataset is None:
+            class_name = str(class_index)
+        else:
+            class_name = self.train_dataset.class_names[class_index]
 
         return prediction, class_index, class_name, image
 
@@ -198,21 +205,22 @@ def main():
     path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", "bottle", "images")
 
     model = TransferLearning(base_model="resnet50",
-                             image_path=path,
-                             image_size=(900, 900),
-                             batch_size=16,
                              only_cpu=True,
-                             model_path="models/resnet50.h5")
+                             model_path="models/mobilenetv2.h5")
 
     # Best learning rates:
     # mobilenetv2 = 0.0005
     # resnet50 = 0.001
 
+    model.load_data(image_path=path,
+                    image_size=(900, 900),
+                    batch_size=16,
+                    validation_split=0.2)
     # model.show_example_images()
     # model.train(learning_rate=0.0005)
-    model.evaluate()
-    model.plot_metrics()
-    model.save_model(model_name="resnet50")
+    # model.evaluate()
+    # model.plot_metrics()
+    # model.save_model(model_name="resnet50")
 
     prediction, class_index, class_name, image = model.predict(os.path.join(path, "good", "000.png"))
     print(prediction)
