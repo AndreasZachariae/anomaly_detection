@@ -67,7 +67,6 @@ class TransferLearning():
             image_size=image_size,
             batch_size=batch_size)
 
-
     def create_model(self, base_model):
         """Creates the model from specified pretrained base model without top layer.
         Add two fully connected layers to train with dataset on custom classes
@@ -101,9 +100,8 @@ class TransferLearning():
         model = Model(inputs=inputs, outputs=outputs)
 
         base_model.trainable = False
-        
-        return model
 
+        return model
 
     def show_example_images(self):
         """Plots a figure with 3*3 example images from the training dataset
@@ -128,12 +126,12 @@ class TransferLearning():
         """
 
         self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-                      loss=tf.keras.losses.SparseCategoricalCrossentropy(),
-                      metrics=['accuracy'])
+                           loss=tf.keras.losses.SparseCategoricalCrossentropy(),
+                           metrics=['accuracy'])
 
         history = self.model.fit(self.train_dataset,
-                            validation_data=self.val_dataset,
-                            epochs=5)
+                                 validation_data=self.val_dataset,
+                                 epochs=10)
 
         self.accuracy = history.history['accuracy']
         self.loss = history.history['loss']
@@ -160,7 +158,7 @@ class TransferLearning():
         Args:
             model_name (String): Name to save model.h5 file
         """
-        path = os.path.join("models", model_name + "_acc" + str(round(self.accuracy*100)) + ".h5")
+        path = os.path.join("models", model_name + "_acc" + str(round(self.accuracy[-1]*100)) + ".h5")
         self.model.save(path, save_format='h5')
 
     def predict(self, image_path):
@@ -179,7 +177,7 @@ class TransferLearning():
         tensor = tf.convert_to_tensor(image, dtype=tf.float32)
         tensor = tf.expand_dims(tensor, 0)
         prediction = self.model.predict(tensor)
-        class_index = int(tf.math.argmax(prediction,1))
+        class_index = int(tf.math.argmax(prediction, 1))
 
         if self.train_dataset is None:
             class_name = str(class_index)
@@ -204,28 +202,29 @@ class TransferLearning():
 def main():
     path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", "bottle", "images")
 
-    model = TransferLearning(base_model="resnet50",
+    model = TransferLearning(base_model="inceptionresnetv2",
                              only_cpu=True,
-                             model_path="models/mobilenetv2.h5")
+                             model_path=None)
 
     # Best learning rates:
     # mobilenetv2 = 0.0005
     # resnet50 = 0.001
+    # inceptionresnetv2 = 0.005
 
     model.load_data(image_path=path,
                     image_size=(900, 900),
                     batch_size=16,
                     validation_split=0.2)
     # model.show_example_images()
-    # model.train(learning_rate=0.0005)
+    model.train(learning_rate=0.005)
     # model.evaluate()
-    # model.plot_metrics()
-    # model.save_model(model_name="resnet50")
+    model.plot_metrics()
+    model.save_model(model_name="inceptionresnetv2")
 
-    prediction, class_index, class_name, image = model.predict(os.path.join(path, "good", "000.png"))
-    print(prediction)
-    cv2.imshow("predicted_class="+class_name, image)
-    cv2.waitKey(0)
+    # prediction, class_index, class_name, image = model.predict(os.path.join(path, "good", "000.png"))
+    # print(prediction)
+    # cv2.imshow("predicted_class="+class_name, image)
+    # cv2.waitKey(0)
 
 
 if __name__ == "__main__":
