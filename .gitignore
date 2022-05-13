@@ -3,6 +3,7 @@ dataset/**/*.png
 dataset/**/*.txt
 dataset/**/*.xml
 models/*.h5
+.vscode
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
