@@ -1,74 +1,86 @@
+# -*- coding: utf-8 -*-
 import os
-import numpy as np
 import collections
-
+import joblib
+import pickle
 import cv2
+import numpy as np
 
-from scipy.cluster.vq import kmeans,vq, whiten
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC 
+from scipy.cluster.vq import kmeans,vq, whiten
+# from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 
-class BagOfVisualWords():    
-    def __init__(self, path, split_ratio=0.85):
-        self.class_dict = self.get_classes(path)
-        (imgs, labels) = self.load_data(path)
-        (self.imgs_train, self.lbls_train, self.imgs_test, self.lbls_test) \
-            = self.random_split(imgs, labels, split_ratio)
-        self.descriptor = None
-        self.codebook = None
-        self.scaler = None
-        self.svm = None
+# CLASS -----------------------------------------------------------------------
+class BagOfVisualWords(): 
+    def __init__(self, model_path=None, descriptor_type="sift"):
+        self.descriptor = self.get_descriptor(descriptor_type)
+        self.codebook, self.svm, self.class_dict = self.get_model(model_path) 
+        self.train_dataset = None
+        self.val_dataset = None
+        self.accuracy = None
+        self.precision = None
+        self.f1 = None
         
-        
-    def metrics(self):
-        if (self.descriptor is None or self.codebook is None 
-            or self.scaler is None or self.svm is None):
-            print("Metrics cannot be calculated. Please check if training",
-                  " has been done")
-            return
-        
-        print("\nCalculating metrics...")
+    # CLASSIFICATION FUNCTIONS ------------------------------------------------
+    def predict(self, image_path):
+        """
+        Predict a specific image's class.
+
+        Parameters
+        ----------
+        image_path : str
+            Path to the image.
+
+        Returns
+        -------
+        prediction : numpy.ndarray
+            Array of probabilities for each class.
+        class_index : int
+            Argmax of prediction array.
+        class_name : str
+            The corresponding class name to the class index.
+        image : numpy.ndarray
+            The classified image.
+
+        """
         print("Extract keypoint features...")
-        (img_descr, _) = self.get_descriptor_lists(self.imgs_test)
+        (img_descr, _) = self.get_descriptor_lists(np.array([image_path]), self.descriptor)
         print("Create bag of codewords...")
         features = self.get_codewords(img_descr)
         
-        print("Predict training data with Support Vector Machine...")
-        predictions = self.svm.predict(features)
+        prediction = self.svm.predict_proba(features)
+        class_index = int(np.argmax(prediction))
+        class_name = self.class_dict[class_index]
+        image = cv2.imread(image_path)
         
-        accuracy = accuracy_score(self.lbls_test, predictions)
-        precision = precision_score(self.lbls_test, predictions, average='weighted')
-        recall = recall_score(self.lbls_test, predictions, average='weighted')
-        f1 = f1_score(self.lbls_test, predictions, average='weighted')
-        metrics = {"accuracy" : accuracy,
-                   "precision": precision,
-                   "recall"   : recall,
-                   "f1"       : f1}
-        # print(predictions)
-        # print(self.lbls_test)
-        print("Calculating done.")  
-        
-        return metrics
-
+        return prediction, class_index, class_name, image
     
-    def train(self, descriptor="orb", svm_type="rbf", svm_iter=80000, k=200, k_iter=20):
+    def train(self, svm_type="rbf", svm_iter=80000, k=200, k_iter=20):
+        """
+        Train a Support Vector Machine (SVM) with Bag of Visual Words.
+
+        Parameters
+        ----------
+        svm_type : str, optional
+            The SVM's kernel type. The default is "rbf".
+        svm_iter : int, optional
+            A limit of iterations for the SVM. -1 for no limit. The default is 80000.
+        k : int, optional
+            The number of centroids for k-means clustering. The default is 200.
+        k_iter : int, optional
+            The number of times to run k-means. The default is 20.
+
+        Returns
+        -------
+        None.
+
+        """
         print("\nTraining started...")
-        self.k = k
-        
-        
-        # TODO: test with different parameters
-        if descriptor == "orb": 
-            self.descriptor = cv2.ORB_create() 
-        elif descriptor == "sift":
-            self.descriptor = cv2.SIFT_create()
-        else:
-            print("Invalid descriptor. Must be one of \"orb\" or \"sift\".")
-            return
         
         try:
-            self.svm = SVC(kernel=svm_type, max_iter=svm_iter)
+            self.svm = SVC(kernel=svm_type, max_iter=svm_iter, probability=True)
         except ValueError:
             print("Invalid parameter for the Support Vector Machine. svm_type"
                   + " must be one of \"linear\", \"poly\", \"rbf\", \"sigmoid"
@@ -77,23 +89,50 @@ class BagOfVisualWords():
             return
         
         print("Extract keypoint features...")
-        (img_descr, descrs) = self.get_descriptor_lists(self.imgs_train)
+        (img_descr, descrs) = self.get_descriptor_lists(self.train_dataset[0], self.descriptor)
         print("Create codebook...")
         # rescale to give features unit variance before clustering
         descrs = whiten(descrs)
-        self.codebook, _ = kmeans(descrs, k, k_iter) # TODO test with other parameters
+        self.codebook, _ = kmeans(descrs, k, k_iter) 
         print("Create bag of codewords...")
         features = self.get_codewords(img_descr)
         
         print("Train Support Vector Machine...")
-        self.svm.fit(features, np.array(self.lbls_train))
+        self.svm.fit(features, np.array(self.train_dataset[1]))
+                
+        self.evaluate()
         
         print("Training done.")
         
+    def evaluate(self):
+        """
+        Calculates accuracy, precision, recall and f1 score.
+
+        Returns
+        -------
+        None.
+
+        """
+        print("Calculating metrics...") 
+        print("Extract keypoint features...")    
+        (img_descr, _) = self.get_descriptor_lists(self.val_dataset[0], self.descriptor)
+        print("Create bag of codewords...")
+        features = self.get_codewords(img_descr)
+        
+        print("Predict training data with Support Vector Machine...")
+        predictions = self.svm.predict(features)
+        
+        self.accuracy = [accuracy_score(self.val_dataset[1], predictions)]
+        # ??? delete the following metrics? Necessary?
+        self.precision = precision_score(self.val_dataset[1], predictions, average='weighted')
+        self.recall = recall_score(self.val_dataset[1], predictions, average='weighted')
+        self.f1 = f1_score(self.val_dataset[1], predictions, average='weighted')
+
+        print("Calculating done.")
     
     def get_codewords(self, img_descr_list):
         """
-        Creates the bag of visual words.
+        Creates the Bag of Visual Words.
 
         Parameters
         ----------
@@ -116,13 +155,13 @@ class BagOfVisualWords():
         
         # normalise features as many machine learning estimators (e.g. SVM with 
         # rbf kernel) assume standard normally distributed data
-        self.scaler = StandardScaler().fit(features) 
-        features = self.scaler.transform(features)
+        # ??? remove scaling, because otherwise single images cannot be predicted correctly
+        # scaler = StandardScaler().fit(features) 
+        # features = scaler.transform(features)
         
         return features
-        
-        
-    def get_descriptor_lists(self, img_paths):
+    
+    def get_descriptor_lists(self, img_paths, descriptor):
         """
         Calculates feature descriptors for every image and stores them in two different ways.
 
@@ -130,6 +169,8 @@ class BagOfVisualWords():
         ----------
         img_paths : numpy.ndarray
             An array containing all image paths.
+        descriptor : cv2.Feature2D (specifically cv2.ORB or cv2.SIFT)
+            The keypoint detector and descriptor extractor object.
 
         Returns
         -------
@@ -145,7 +186,7 @@ class BagOfVisualWords():
         for path in img_paths:
             img = cv2.imread(path)
             # detect keypoints and compute descriptor
-            _, dscr = self.descriptor.detectAndCompute(img, None)
+            _, dscr = descriptor.detectAndCompute(img, None)
             img_des.append([path, dscr])
             descriptors += list(dscr)
            
@@ -153,11 +194,32 @@ class BagOfVisualWords():
         descriptors = np.array(descriptors, dtype=float)
            
         return (img_des, descriptors)
-    
-    
+        
+    # DATA PROCESSING FUNCTIONS -----------------------------------------------
+    def load_data(self, image_path, image_size=None, batch_size=None, validation_split=0.2):
+        """
+        Loads the data at a specific path and randomly splits it into training and validation datasets.
+
+        Parameters
+        ----------
+        image_path : str
+            Path to the images.
+        validation_split : float, optional
+            The ratio of validation data to validation + training data. The default is 0.2.
+
+        Returns
+        -------
+        None.
+
+        """
+        self.class_dict = self.get_classes(image_path)
+        dataset = self.load_all(image_path) # dataset = (classes, labels)
+        self.train_dataset, self.val_dataset = self.random_split(
+            dataset[0], dataset[1], validation_split) 
+        
     def random_split(self, images, labels, split_ratio):
         """
-        Randomly splits the dataset into training and test data.
+        Randomly splits a given dataset into training and test data.
 
         Parameters
         ----------
@@ -166,7 +228,7 @@ class BagOfVisualWords():
         labels : numpy.ndarray
             An array containing the class labels corresponding to the images.
         split_ratio : float
-            The ratio of training data to training +  test data.
+            The ratio of validation data to validation + training data.
 
         Returns
         -------
@@ -186,40 +248,15 @@ class BagOfVisualWords():
         labels = labels[p]
         
         # split into training and test data
-        split_val = int(len(images)*split_ratio)
-        imgs_test = images[split_val:]
-        lbls_test = labels[split_val:]
-        imgs_train = images[:split_val]
-        lbls_train = labels[:split_val]
+        split_value = int(len(images)*split_ratio)
+        imgs_train = images[split_value:]
+        lbls_train = labels[split_value:]
+        imgs_val = images[:split_value]
+        lbls_val = labels[:split_value]
         
-        return (imgs_train, lbls_train, imgs_test, lbls_test)
-    
+        return (imgs_train, lbls_train), (imgs_val, lbls_val)
         
-    def get_classes(self, path):
-        """
-        Creates a dictionary for all class names found in the given path and their corresponding indices.
-
-        Parameters
-        ----------
-        path : str
-            Path to the directory containing all images sorted by class names.
-
-        Returns
-        -------
-        class_dict : dict
-            Dictionary to get class names by their indices and vice versa.
-
-        """
-        class_names = os.listdir(path)        
-        class_indices = list(range(len(class_names)))
-        
-        class_dict = dict(zip(class_names, class_indices))
-        class_dict.update(dict(zip(class_indices, class_names)))
-        
-        return class_dict
-        
-    
-    def load_data(self, path):
+    def load_all(self, path):
         """
         Make a list of all images' paths and their classes respectively.
 
@@ -264,19 +301,141 @@ class BagOfVisualWords():
             print(f"Using only {max_imgs} images per class.")           
             
         return (img_paths, img_classes)
-       
+        
+    # GENERAL FUNCTIONS -------------------------------------------------------
+    def save_model(self, model_name="bovw"):
+        """
+        Save the codebook, SVM and class dictionary necessary for reusing a pretrained model.
 
-def main():
-    data_path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", "bottle", "images")
-    
-    bovw = BagOfVisualWords(data_path, split_ratio=0.6)
-    bovw.train(descriptor="sift", svm_iter=-1, k=200, k_iter=3)
-    metr = bovw.metrics()
-    print(metr)
-    # print(f"Accuracy: {metr['accuracy']}.")
+        Parameters
+        ----------
+        model_name : st, optional
+            Name of the folder to be created containing the model files. The default is "bovw".
+
+        Returns
+        -------
+        None.
+
+        """
+        # create folder if it does not exist already
+        if not os.path.exists(os.path.join(os.getcwd(), "models", model_name)):
+            os.makedirs(os.path.join(os.getcwd(), "models", model_name))
+        
+        # save the codebook, svm and classes dicionary
+        np.save(
+            os.path.join("models", model_name, f"bovw_codebook_acc{round(self.accuracy[0]*100)}.npy"),
+            self.codebook, allow_pickle=True)
+        joblib.dump(self.svm, os.path.join("models", model_name, f"bovw_svm_acc{round(self.accuracy[0]*100)}.joblib"))
+        with open(os.path.join("models", model_name, "bovw_classes.pkl"), "wb") as dict_file:
+            pickle.dump(self.class_dict, dict_file)
+   
+    def get_model(self, path):
+        """
+        Loads all files necessary for reusing a pretrained model if a path is given. Otherwise initialises the necessary objects as None type to be created when training.
+
+        Parameters
+        ----------
+        path : str
+            Path to the files of a pretrained model.
+
+        Returns
+        -------
+        codebook : numpy.ndarray
+            Contains the codes for the centroids of k-means clustering.
+        svm : sklearn.svm._classes.SVC
+            The Support Vector Machine to be trained.
+        class_dict : dict
+            Dictionary to get class names by their indices and vice versa.
+
+        """
+        codebook = None
+        svm = None
+        class_dict = None
+        
+        if path is not None:
+            for obj in os.listdir(path):
+                if obj.endswith(".npy"):
+                    codebook = np.load(
+                        os.path.join(path, obj), allow_pickle=True)
+                elif obj.endswith(".joblib"):
+                    svm = joblib.load(os.path.join(path, obj))
+                elif obj.endswith(".pkl"):
+                    with open(os.path.join(path, obj), "rb") as dict_file:
+                        class_dict = pickle.load(dict_file)
+            print("Pretrained model loaded.")
             
+            if codebook is None or svm is None or class_dict is None:
+                print(f"Model files cannot be found at path \"{path}\".",
+                      "Pretrained model not loaded. Please train before inference.")
+            
+        return codebook, svm, class_dict
+        
+    def get_descriptor(self, descriptor_type):
+        """
+        Creates the keypoint detector and descriptor extractor object.
+
+        Parameters
+        ----------
+        descriptor_type : str
+            The detector type to be used. One of "orb" or "sift".
+
+        Returns
+        -------
+        descriptor : cv2.Feature2D (specifically cv2.ORB or cv2.SIFT)
+            The keypoint detector and descriptor extractor object.
+
+        """
+        if descriptor_type == "orb": 
+            descriptor = cv2.ORB_create() 
+        elif descriptor_type == "sift":
+            descriptor = cv2.SIFT_create()
+        else:
+            print("Invalid descriptor type. Must be one of \"orb\" or",
+                  "\"sift\". Will be set to \"sift\" automatically.")
+            descriptor = cv2.SIFT_Create()
+        
+        return descriptor
+        
+    def get_classes(self, path):
+        """
+        Creates a dictionary for all class names found in the given path and their corresponding indices.
+
+        Parameters
+        ----------
+        path : str
+            Path to the directory containing all images sorted by class names.
+
+        Returns
+        -------
+        class_dict : dict
+            Dictionary to get class names by their indices and vice versa.
+            
+        """
+        class_names = os.listdir(path)        
+        class_indices = list(range(len(class_names)))
+        class_dict = dict(zip(class_names, class_indices))
+        class_dict.update(dict(zip(class_indices, class_names)))
+
+        return class_dict
+    
+# MAIN ------------------------------------------------------------------------    
+def main():
+    load_model = True
+    data_path = os.path.join(
+        os.getcwd(), "dataset", "augmented_dataset", "bottle", "images")
+    
+    if load_model:
+        model_path = os.path.join(os.getcwd(), "models", "bovw")
+        
+        model = BagOfVisualWords(model_path)
+        pred, idx, name, img = model.predict(os.path.join(data_path, "good", "001.png"))
+        print(f"Predicted \"{name}\" with {pred[0][idx]*100:.2f} % confidence.")
+    else:
+        model = BagOfVisualWords()
+        model.load_data(data_path, validation_split=0.4)
+        model.train(svm_type="rbf", svm_iter=-1, k=200, k_iter=3)
+        print("Accuracy:", model.accuracy)
+        model.save_model(model_name="bovw_v2")
 
 if __name__ == '__main__':
     main()
-    
-        
