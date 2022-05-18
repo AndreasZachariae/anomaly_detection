@@ -239,12 +239,11 @@ def main():
         # mobilenetv2 = 0.0005
         # resnet50 = 0.001
         # inceptionresnetv2 = 0.005
-        for file_name, model_name, learning_rate, epochs in [("old/mobilenetv2_acc99.h5", "mobilenetv2", 0.0001, 10), ("old/inceptionresnetv2_acc95.h5", "inceptionresnetv2", 0.001, 10), ("old/resnet50_acc98.h5", "resnet50", 0.001, 10)]:
+        for model_name, learning_rate, epochs in [("mobilenetv2", 0.0001, 50), ("inceptionresnetv2", 0.001, 50), ("resnet50", 0.001, 50)]:
             print(model_name, learning_rate, epochs)
 
             model = TransferLearning(base_model=model_name,
-                                     only_cpu=False,
-                                     model_path="models/" + file_name)
+                                     only_cpu=False)
 
             model.load_data(image_path=path,
                             image_size=(900, 900),
