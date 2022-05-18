@@ -39,8 +39,10 @@ class TransferLearning():
 
         self.train_dataset = None
         self.val_dataset = None
-        self.accuracy = None
-        self.loss = None
+        self.accuracy = []
+        self.loss = []
+        self.val_accuracy = []
+        self.val_loss = []
 
     def load_data(self, image_path, image_size, batch_size, validation_split=0.2):
         """Splits dataset in validation and training data default=20/80%
@@ -67,7 +69,7 @@ class TransferLearning():
             image_size=image_size,
             batch_size=batch_size)
 
-    def create_model(self, base_model):
+    def create_model(self, base_model_name):
         """Creates the model from specified pretrained base model without top layer.
         Add two fully connected layers to train with dataset on custom classes
 
@@ -77,13 +79,13 @@ class TransferLearning():
         Returns:
             Keras Model: Complete model to be trained
         """
-        if base_model == "resnet50":
+        if base_model_name == "resnet50":
             base_model = ResNet50(input_shape=(900, 900, 3), weights='imagenet', include_top=False)
             preprocess_input = preprocess_resnet50
-        elif base_model == "mobilenetv2":
+        elif base_model_name == "mobilenetv2":
             base_model = MobileNetV2(input_shape=(900, 900, 3), weights='imagenet', include_top=False)
             preprocess_input = preprocess_mobilenetv2
-        elif base_model == "inceptionresnetv2":
+        elif base_model_name == "inceptionresnetv2":
             base_model = InceptionResNetV2(input_shape=(900, 900, 3), weights='imagenet', include_top=False)
             preprocess_input = preprocess_inceptionresnetv2
         else:
@@ -93,11 +95,11 @@ class TransferLearning():
         x = preprocess_input(inputs)
         x = base_model(x, training=False)
         x = GlobalAveragePooling2D()(x)
-        # x = Dropout(0.2)(x)
-        # x = Dense(1024, activation='relu')(x)
+        x = Dropout(0.2)(x)
+        x = Dense(1024, activation='relu')(x)
         outputs = Dense(4, activation='softmax')(x)
 
-        model = Model(inputs=inputs, outputs=outputs)
+        model = Model(inputs=inputs, outputs=outputs, name=base_model_name + "_transfer_learning")
 
         base_model.trainable = False
 
@@ -118,11 +120,12 @@ class TransferLearning():
 
         plt.show()
 
-    def train(self, learning_rate):
+    def train(self, learning_rate, epochs):
         """Compile the model and train on dataset with specified learning rate.
 
         Args:
             learning_rate (float): Learning rate to apply
+            epochs (int): Number of training epochs
         """
 
         self.model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
@@ -131,25 +134,30 @@ class TransferLearning():
 
         history = self.model.fit(self.train_dataset,
                                  validation_data=self.val_dataset,
-                                 epochs=10)
+                                 epochs=epochs)
 
         self.accuracy = history.history['accuracy']
         self.loss = history.history['loss']
+        self.val_accuracy = history.history['val_accuracy']
+        self.val_loss = history.history['val_loss']
 
-    def fine_tuning(self, learning_rate):
+    def fine_tuning(self, learning_rate, epochs):
         self.model.trainable = True
-        self.train(learning_rate)
+        self.train(learning_rate, epochs)
 
     def plot_metrics(self):
         """Plot loss and accuracy over epochs
         """
         plt.figure(figsize=(8, 8))
-        plt.plot(self.accuracy, label='Training Accuracy', marker="x")
-        plt.plot(self.loss, label='Training Loss', marker="o")
-        plt.legend(loc='lower left')
+        plt.plot(self.accuracy, label='Training Accuracy', marker="x", color="blue")
+        plt.plot(self.loss, label='Training Loss', marker="o", color="red")
+        plt.plot(self.val_accuracy, label='Validation Accuracy', marker="x", color="lightblue")
+        plt.plot(self.val_loss, label='Validation Loss', marker="o", color="lightcoral")
+        plt.legend(loc='lower right')
         plt.ylabel('Accuracy')
+        plt.xlabel('Epochs')
         plt.ylim([min(plt.ylim()), 1])
-        plt.title('Training Accuracy and Loss')
+        plt.title("Model: " + self.model.name)
         plt.show()
 
     def save_model(self, model_name):
@@ -158,7 +166,7 @@ class TransferLearning():
         Args:
             model_name (String): Name to save model.h5 file
         """
-        path = os.path.join("models", model_name + "_acc" + str(round(self.accuracy[-1]*100)) + ".h5")
+        path = os.path.join("models", model_name + "_acc" + str(round(self.val_accuracy[-1]*100)) + ".h5")
         self.model.save(path, save_format='h5')
 
     def predict(self, image_path):
@@ -193,38 +201,61 @@ class TransferLearning():
             dict: dict with two keys: accuracy, loss
         """
         result = self.model.evaluate(self.val_dataset, return_dict=True)
-        self.accuracy = result['accuracy']
-        self.loss = result['loss']
+        self.val_accuracy = result['accuracy']
+        self.val_loss = result['loss']
 
         return result
 
 
 def main():
+    load_model = False
+    fine_tuning = False
+
     path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", "bottle", "images")
 
-    model = TransferLearning(base_model="inceptionresnetv2",
-                             only_cpu=True,
-                             model_path=None)
+    if load_model:
+        for file_name, learning_rate, epochs in [("old/inceptionresnetv2_acc95.h5", 0.0001, 10), ("old/mobilenetv2_acc99.h5", 0.00001, 10), ("old/resnet50_acc98.h5", 0.0001, 10)]:
+            model = TransferLearning(base_model="",
+                                     only_cpu=False,
+                                     model_path="models/" + file_name)
+            if fine_tuning:
+                model.load_data(image_path=path,
+                                image_size=(900, 900),
+                                batch_size=4,
+                                validation_split=0.2)
 
-    # Best learning rates:
-    # mobilenetv2 = 0.0005
-    # resnet50 = 0.001
-    # inceptionresnetv2 = 0.005
+                model.fine_tuning(learning_rate, epochs)
+                model.save_model(model_name)
+                model.plot_metrics()
 
-    model.load_data(image_path=path,
-                    image_size=(900, 900),
-                    batch_size=16,
-                    validation_split=0.2)
-    # model.show_example_images()
-    model.train(learning_rate=0.005)
-    # model.evaluate()
-    model.plot_metrics()
-    model.save_model(model_name="inceptionresnetv2")
+            else:
+                prediction, class_index, class_name, image = model.predict(os.path.join(path, "good", "000.png"))
+                print(prediction)
+                cv2.imshow("predicted_class="+class_name, image)
+                cv2.waitKey(0)
 
-    # prediction, class_index, class_name, image = model.predict(os.path.join(path, "good", "000.png"))
-    # print(prediction)
-    # cv2.imshow("predicted_class="+class_name, image)
-    # cv2.waitKey(0)
+    else:
+        # Best learning rates:
+        # mobilenetv2 = 0.0005
+        # resnet50 = 0.001
+        # inceptionresnetv2 = 0.005
+        for file_name, model_name, learning_rate, epochs in [("old/mobilenetv2_acc99.h5", "mobilenetv2", 0.0001, 10), ("old/inceptionresnetv2_acc95.h5", "inceptionresnetv2", 0.001, 10), ("old/resnet50_acc98.h5", "resnet50", 0.001, 10)]:
+            print(model_name, learning_rate, epochs)
+
+            model = TransferLearning(base_model=model_name,
+                                     only_cpu=False,
+                                     model_path="models/" + file_name)
+
+            model.load_data(image_path=path,
+                            image_size=(900, 900),
+                            batch_size=32,
+                            validation_split=0.2)
+
+            # model.show_example_images()
+            model.train(learning_rate, epochs)
+            model.plot_metrics()
+            # model.evaluate()
+            model.save_model(model_name)
 
 
 if __name__ == "__main__":
