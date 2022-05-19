@@ -136,10 +136,10 @@ class TransferLearning():
                                  validation_data=self.val_dataset,
                                  epochs=epochs)
 
-        self.accuracy = history.history['accuracy']
-        self.loss = history.history['loss']
-        self.val_accuracy = history.history['val_accuracy']
-        self.val_loss = history.history['val_loss']
+        self.accuracy.extend(history.history['accuracy'])
+        self.loss.extend(history.history['loss'])
+        self.val_accuracy.extend(history.history['val_accuracy'])
+        self.val_loss.extend(history.history['val_loss'])
 
     def fine_tuning(self, learning_rate, epochs):
         self.model.trainable = True
@@ -149,16 +149,17 @@ class TransferLearning():
         """Plot loss and accuracy over epochs
         """
         plt.figure(figsize=(8, 8))
-        plt.plot(self.accuracy, label='Training Accuracy', marker="x", color="blue")
-        plt.plot(self.loss, label='Training Loss', marker="o", color="red")
-        plt.plot(self.val_accuracy, label='Validation Accuracy', marker="x", color="lightblue")
-        plt.plot(self.val_loss, label='Validation Loss', marker="o", color="lightcoral")
-        plt.legend(loc='lower right')
-        plt.ylabel('Accuracy')
+        plt.plot(self.val_accuracy, label='Validation Accuracy', marker="x", color="blue")
+        plt.plot(self.accuracy, label='Training Accuracy', marker="x", color="lightblue")
+        plt.plot(self.val_loss, label='Validation Loss', marker="o", color="red")
+        plt.plot(self.loss, label='Training Loss', marker="o", color="lightcoral")
+        plt.legend(loc='center right')
+        plt.ylabel('Accuracy and Loss')
         plt.xlabel('Epochs')
         plt.ylim([min(plt.ylim()), 1])
         plt.title("Model: " + self.model.name)
-        plt.show()
+        plt.savefig(self.model.name)
+        # plt.show()
 
     def save_model(self, model_name):
         """Wrapper for Keras Model save function
@@ -214,7 +215,9 @@ def main():
     path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", "bottle", "images")
 
     if load_model:
-        for file_name, learning_rate, epochs in [("old/inceptionresnetv2_acc95.h5", 0.0001, 10), ("old/mobilenetv2_acc99.h5", 0.00001, 10), ("old/resnet50_acc98.h5", 0.0001, 10)]:
+        for file_name, learning_rate, epochs in [("old/inceptionresnetv2_acc95.h5", 0.0001, 10),
+                                                 ("old/mobilenetv2_acc99.h5", 0.00001, 10),
+                                                 ("old/resnet50_acc98.h5", 0.0001, 10)]:
             model = TransferLearning(base_model="",
                                      only_cpu=False,
                                      model_path="models/" + file_name)
@@ -239,7 +242,9 @@ def main():
         # mobilenetv2 = 0.0005
         # resnet50 = 0.001
         # inceptionresnetv2 = 0.005
-        for model_name, learning_rate, epochs in [("mobilenetv2", 0.0001, 50), ("inceptionresnetv2", 0.001, 50), ("resnet50", 0.001, 50)]:
+        for model_name, learning_rate, epochs in [("mobilenetv2", 0.0001, 30),
+                                                  ("inceptionresnetv2", 0.001, 30),
+                                                  ("resnet50", 0.001, 30)]:
             print(model_name, learning_rate, epochs)
 
             model = TransferLearning(base_model=model_name,
@@ -252,6 +257,7 @@ def main():
 
             # model.show_example_images()
             model.train(learning_rate, epochs)
+            model.train(learning_rate/10, int(epochs/2))
             model.plot_metrics()
             # model.evaluate()
             model.save_model(model_name)

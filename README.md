@@ -17,9 +17,8 @@ Different methods for anomaly detection on the MVTec dataset
     - Dense(1024)
     - Dense(4)
 3. Train with new dataset 20 epochs, learning_rate 0.001
-![train](docs/metrics_inceptionresnetv2.png)
 4. Fine tuning 10 epochs, learning_rate 0.0001
-![fine_tuning](docs/metrics_inceptionresnetv2_fine_tuning.png)
+![train](docs/mobilenetv2_transfer_learning.png)
 
 ### Ensemble
 - Hard voting
