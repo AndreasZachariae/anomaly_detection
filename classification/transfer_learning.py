@@ -54,17 +54,13 @@ class TransferLearning():
             validation_split (float): Percentage to split between test and train data
         """
         self.train_dataset = tf.keras.preprocessing.image_dataset_from_directory(
-            image_path,
-            validation_split=validation_split,
-            subset="training",
+            os.path.join(image_path, "train", "images"),
             seed=123,
             image_size=image_size,
             batch_size=batch_size)
 
         self.val_dataset = tf.keras.preprocessing.image_dataset_from_directory(
-            image_path,
-            validation_split=validation_split,
-            subset="validation",
+            os.path.join(image_path, "test", "images"),
             seed=123,
             image_size=image_size,
             batch_size=batch_size)
@@ -212,14 +208,14 @@ def main():
     load_model = False
     fine_tuning = False
 
-    path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", "bottle", "images")
+    path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", "bottle")
 
     if load_model:
         for file_name, learning_rate, epochs in [("old/inceptionresnetv2_acc95.h5", 0.0001, 10),
                                                  ("old/mobilenetv2_acc99.h5", 0.00001, 10),
                                                  ("old/resnet50_acc98.h5", 0.0001, 10)]:
             model = TransferLearning(base_model="",
-                                     only_cpu=False,
+                                     only_cpu=True,
                                      model_path="models/" + file_name)
             if fine_tuning:
                 model.load_data(image_path=path,
@@ -232,7 +228,7 @@ def main():
                 model.plot_metrics()
 
             else:
-                prediction, class_index, class_name, image = model.predict(os.path.join(path, "good", "000.png"))
+                prediction, class_index, class_name, image = model.predict(os.path.join(path, "validate", "images", "good", "000_train.png"))
                 print(prediction)
                 cv2.imshow("predicted_class="+class_name, image)
                 cv2.waitKey(0)
@@ -248,7 +244,7 @@ def main():
             print(model_name, learning_rate, epochs)
 
             model = TransferLearning(base_model=model_name,
-                                     only_cpu=False)
+                                     only_cpu=True)
 
             model.load_data(image_path=path,
                             image_size=(900, 900),
