@@ -12,19 +12,20 @@ class DataAugmentation():
 
     def augment_dataset(self):
         for type_name in os.listdir(self.folder_path):
-            # only use bottle dataset. remove this if all types should be copied
-            if not type_name == "bottle":
-                continue
+            for split_name in ["test", "train", "validate"]:
+                split_path = os.path.join(self.folder_path, type_name, split_name)
+                for class_name in os.listdir(os.path.join(split_path, "images")):
+                    if class_name == "good":
+                        continue
 
-            for class_name in os.listdir(os.path.join(self.folder_path, type_name, "ground_truth")):
-                for image_name in os.listdir(os.path.join(self.folder_path, type_name, "images", class_name)):
-                    mask_name = image_name.split('.')[0] + "_mask." + image_name.split('.')[1]
-                    mask_path = os.path.join(self.folder_path, type_name, "ground_truth", class_name)
-                    image_path = os.path.join(self.folder_path, type_name, "images", class_name)
+                    for image_name in os.listdir(os.path.join(split_path, "images", class_name)):
+                        mask_name = image_name.split('.')[0] + "_mask." + image_name.split('.')[1]
+                        mask_path = os.path.join(split_path, "ground_truth", class_name)
+                        image_path = os.path.join(split_path, "images", class_name)
 
-                    self.augment_image(image_path, image_name, mask_path, mask_name)
+                        self.augment_image(image_path, image_name, mask_path, mask_name, type_name)
 
-    def augment_image(self, image_path, image_name, mask_path, mask_name):
+    def augment_image(self, image_path, image_name, mask_path, mask_name, type_name):
         original_image = cv2.imread(os.path.join(image_path, image_name))
         original_mask = cv2.imread(os.path.join(mask_path, mask_name))
 
@@ -41,8 +42,12 @@ class DataAugmentation():
 
             for rotation in range(int(math.sqrt(self.multiplier/3))):
                 angle = int(random.uniform(-90, 90))
-                image_rotated = self.rotation(image_flipped, angle)
-                mask_rotated = self.rotation(mask_flipped, angle, mask=True)
+                if type_name == "bottle":
+                    image_rotated = self.rotation(image_flipped, angle, fill_color="white")
+                else:
+                    image_rotated = self.rotation(image_flipped, angle, fill_color="black")
+
+                mask_rotated = self.rotation(mask_flipped, angle, fill_color="black")
 
                 for brightness in range(int(math.sqrt(self.multiplier/3))):
                     value = random.uniform(0.5, 1.5)
@@ -78,13 +83,15 @@ class DataAugmentation():
         image = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
         return image
 
-    def rotation(self, image, angle, mask=False):
+    def rotation(self, image, angle, fill_color):
         h, w = image.shape[:2]
         M = cv2.getRotationMatrix2D((int(w/2), int(h/2)), angle, 1)
-        if mask:
+        if fill_color == "black":
             borderValue = (0, 0, 0)
-        else:
+        elif fill_color == "white":
             borderValue = (255, 255, 255)
+        else:
+            print("Undefined color")
 
         image = cv2.warpAffine(image,
                                M,
@@ -95,11 +102,11 @@ class DataAugmentation():
 
     def save_image(self, image, path, name, flip, angle, value):
         cv2.imwrite(path + "/" +
-                    name.split('.')[0] +
+                    name[:3] +
                     "_" + flip +
                     "_rotate" + str(angle) +
                     "_bright" + str(round(value, 3)) +
-                    "." + name.split('.')[1],
+                    name[3:],
                     image)
 
 
