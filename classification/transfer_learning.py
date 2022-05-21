@@ -10,6 +10,7 @@ from tensorflow.keras.applications.resnet50 import preprocess_input as preproces
 from tensorflow.keras.applications.inception_resnet_v2 import InceptionResNetV2
 from tensorflow.keras.applications.inception_resnet_v2 import preprocess_input as preprocess_inceptionresnetv2
 from tensorflow.keras.models import Model, load_model
+import json
 
 
 class TransferLearning():
@@ -17,7 +18,7 @@ class TransferLearning():
     Trains the last layers with custom dataset.
     """
 
-    def __init__(self, base_model, only_cpu, model_path=None):
+    def __init__(self, model_path, type_name, base_model=None, load_model_name=None, only_cpu=False):
         """Initialize model with base model or use pretrained model if path is given
 
         Args:
@@ -29,13 +30,20 @@ class TransferLearning():
             os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
             print("Disabled GPU devices")
 
-        if model_path is not None:
-            self.model = load_model(model_path)
-            print("Trained model loaded")
-        else:
-            self.model = self.create_model(base_model)
+        self.model_path = model_path
+        self.labels = self.load_json(type_name)
+
+        if load_model_name is None:
+            if base_model is None:
+                print("base_model name can not be None if load_model_name is given")
+            self.model = self.create_model(base_model, type_name, len(self.labels))
             print("Use pretrained base model and train new layers")
-        print(self.model.summary())
+            print(self.model.summary())
+        else:
+            self.model = load_model(os.path.join(self.model_path, load_model_name))
+            print("Trained model loaded: " + load_model_name)
+    
+        print(self.labels)
 
         self.train_dataset = None
         self.val_dataset = None
@@ -65,7 +73,15 @@ class TransferLearning():
             image_size=image_size,
             batch_size=batch_size)
 
-    def create_model(self, base_model_name):
+        self.labels = self.train_dataset.class_names
+
+    def load_json(self, type_name):
+        with open(os.path.join(self.model_path, "labels.json"), 'r') as f:
+            json_dict = json.load(f)
+
+        return json_dict[type_name]
+
+    def create_model(self, base_model_name, type_name, num_classes):
         """Creates the model from specified pretrained base model without top layer.
         Add two fully connected layers to train with dataset on custom classes
 
@@ -93,9 +109,9 @@ class TransferLearning():
         x = GlobalAveragePooling2D()(x)
         x = Dropout(0.2)(x)
         x = Dense(1024, activation='relu')(x)
-        outputs = Dense(4, activation='softmax')(x)
+        outputs = Dense(num_classes, activation='softmax')(x)
 
-        model = Model(inputs=inputs, outputs=outputs, name=base_model_name + "_transfer_learning")
+        model = Model(inputs=inputs, outputs=outputs, name=base_model_name + "_" + type_name)
 
         base_model.trainable = False
 
@@ -141,7 +157,7 @@ class TransferLearning():
         self.model.trainable = True
         self.train(learning_rate, epochs)
 
-    def plot_metrics(self):
+    def plot_metrics(self, metric_path=None):
         """Plot loss and accuracy over epochs
         """
         plt.figure(figsize=(8, 8))
@@ -154,16 +170,19 @@ class TransferLearning():
         plt.xlabel('Epochs')
         plt.ylim([min(plt.ylim()), 1])
         plt.title("Model: " + self.model.name)
-        plt.savefig(self.model.name)
-        # plt.show()
+        if metric_path is None:
+            plt.show()
+        else:
+            path = os.path.join(metric_path, self.model.name + "_acc" + str(round(self.val_accuracy[-1]*100)))
+            plt.savefig(path)
 
-    def save_model(self, model_name):
+    def save_model(self):
         """Wrapper for Keras Model save function
 
         Args:
             model_name (String): Name to save model.h5 file
         """
-        path = os.path.join("models", model_name + "_acc" + str(round(self.val_accuracy[-1]*100)) + ".h5")
+        path = os.path.join(self.model_path, self.model.name + "_acc" + str(round(self.val_accuracy[-1]*100)) + ".h5")
         self.model.save(path, save_format='h5')
 
     def predict(self, image_path):
@@ -179,15 +198,12 @@ class TransferLearning():
             image(cv2.Mat): predicted image to display
         """
         image = cv2.imread(image_path)
+        image = cv2.resize(image, (900,900))
         tensor = tf.convert_to_tensor(image, dtype=tf.float32)
         tensor = tf.expand_dims(tensor, 0)
         prediction = self.model.predict(tensor)
         class_index = int(tf.math.argmax(prediction, 1))
-
-        if self.train_dataset is None:
-            class_name = str(class_index)
-        else:
-            class_name = self.train_dataset.class_names[class_index]
+        class_name = self.labels[class_index]
 
         return prediction, class_index, class_name, image
 
@@ -206,57 +222,58 @@ class TransferLearning():
 
 def main():
     load_model = False
-    fine_tuning = False
+    types = ["bottle", "hazelnut"]
 
-    path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", "bottle")
+    for type_name in types:
+        images_path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", type_name)
+        model_path = os.path.join(os.getcwd(), "models", "transfer_learning", type_name)
 
-    if load_model:
-        for file_name, learning_rate, epochs in [("old/inceptionresnetv2_acc95.h5", 0.0001, 10),
-                                                 ("old/mobilenetv2_acc99.h5", 0.00001, 10),
-                                                 ("old/resnet50_acc98.h5", 0.0001, 10)]:
-            model = TransferLearning(base_model="",
-                                     only_cpu=True,
-                                     model_path="models/" + file_name)
-            if fine_tuning:
-                model.load_data(image_path=path,
-                                image_size=(900, 900),
-                                batch_size=4,
-                                validation_split=0.2)
+        if load_model:
+            models = [model_name for model_name in os.listdir(model_path) if model_name.endswith(".h5")]
+            for model_name in models:
+                model = TransferLearning(type_name=type_name,
+                                        model_path=model_path,
+                                        load_model_name=model_name,
+                                        only_cpu=True)
 
-                model.fine_tuning(learning_rate, epochs)
-                model.save_model(model_name)
-                model.plot_metrics()
+                if type_name == "bottle":
+                    test_image_path = os.path.join(images_path, "validate", "images", "contamination", "013.png")
+                else:
+                    test_image_path = os.path.join(images_path, "validate", "images", "print", "001.png")
 
-            else:
-                prediction, class_index, class_name, image = model.predict(os.path.join(path, "validate", "images", "good", "000_train.png"))
+                prediction, class_index, class_name, image = model.predict(test_image_path)
+
                 print(prediction)
                 cv2.imshow("predicted_class="+class_name, image)
                 cv2.waitKey(0)
 
-    else:
-        # Best learning rates:
-        # mobilenetv2 = 0.0005
-        # resnet50 = 0.001
-        # inceptionresnetv2 = 0.005
-        for model_name, learning_rate, epochs in [("mobilenetv2", 0.0001, 30),
-                                                  ("inceptionresnetv2", 0.001, 30),
-                                                  ("resnet50", 0.001, 30)]:
-            print(model_name, learning_rate, epochs)
+        else:
+            # Best learning rates:
+            # mobilenetv2 = 0.0005
+            # resnet50 = 0.001
+            # inceptionresnetv2 = 0.005
+            for model_name, learning_rate, epochs in [("mobilenetv2", 0.001, 20),
+                                                    ("inceptionresnetv2", 0.001, 20),
+                                                    ("resnet50", 0.001, 20)]:
+                print(model_name, learning_rate, epochs)
 
-            model = TransferLearning(base_model=model_name,
-                                     only_cpu=True)
+                model = TransferLearning(model_path=model_path,
+                                        type_name=type_name,
+                                        base_model=model_name,
+                                        only_cpu=True)
 
-            model.load_data(image_path=path,
-                            image_size=(900, 900),
-                            batch_size=32,
-                            validation_split=0.2)
+                model.load_data(image_path=images_path,
+                                image_size=(900, 900),
+                                batch_size=16,
+                                validation_split=0.2)
 
-            # model.show_example_images()
-            model.train(learning_rate, epochs)
-            model.train(learning_rate/10, int(epochs/2))
-            model.plot_metrics()
-            # model.evaluate()
-            model.save_model(model_name)
+                # model.show_example_images()
+                model.train(learning_rate, epochs)
+                model.train(learning_rate/10, int(epochs/2))
+                # model.fine_tuning(learning_rate/100, epochs)
+                model.plot_metrics(metric_path=model_path)
+                # model.evaluate()
+                model.save_model()
 
 
 if __name__ == "__main__":
