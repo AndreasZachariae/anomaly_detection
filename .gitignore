@@ -2,7 +2,7 @@
 dataset/**/*.png
 dataset/**/*.txt
 dataset/**/*.xml
-models/*.h5
+models/**/*.h5
 models/**/saved_model/
 .vscode
 
