@@ -1,0 +1,8 @@
+{
+    "bottle": [
+        "broken_large",
+        "broken_small",
+        "contamination",
+        "good"
+    ]
+}
