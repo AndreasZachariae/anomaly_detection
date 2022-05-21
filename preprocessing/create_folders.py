@@ -104,9 +104,9 @@ def main():
     create_folders(mvtec_path,
                    augmented_path,
                    types,
-                   train_percentage=0.6,
-                   test_percentage=0.2,
-                   val_percentage=0.2)
+                   train_percentage=0.7,
+                   test_percentage=0.15,
+                   val_percentage=0.15)
 
 
 if __name__ == '__main__':
