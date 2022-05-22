@@ -11,13 +11,14 @@ import cv2
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
+
 class MaskRCNN():
     def __init__(self, model_path, label_path, type_name, only_cpu):
         if only_cpu:
             os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
             print("Disabled GPU devices")
-            
-        # self.model = tf.saved_model.load(model_path)
+
+        self.model = tf.saved_model.load(model_path)
         self.labels = self.load_json(label_path, type_name)
         print("Trained model loaded")
         print("Classes:", self.labels)
@@ -27,7 +28,6 @@ class MaskRCNN():
             json_dict = json.load(f)
 
         return json_dict[type_name]
-        
 
     def predict(self, image_path, threshold):
         """Wrapper for Keras Model predict function
@@ -57,7 +57,7 @@ class MaskRCNN():
         # print(predictions["image_shape"])                        # tf.Tensor([1.000e+00 1.024e+03 1.024e+03 3.000e+00], shape=(4,), dtype=float32)
         # print(predictions["num_detections"])                     # tf.Tensor([100.], shape=(1,), dtype=float32)
         # print(predictions["num_proposals"])                      # tf.Tensor([300.], shape=(1,), dtype=float32)
-
+        # predictions["mask_predictions"]
 
         scores = predictions["detection_scores"][0].numpy()
         idx_list = [idx for idx, score in enumerate(scores) if score > threshold]
@@ -70,8 +70,10 @@ class MaskRCNN():
                 "class_name": self.labels[predictions["detection_classes"][0].numpy().astype(np.uint8)[idx]],
                 "probability": float(predictions["detection_scores"][0].numpy()[idx]),
                 "bounding_box": predictions["detection_boxes"][0].numpy()[idx],
-                "mask": predictions["mask_predictions"][0].numpy()[idx]
+                "mask": predictions["detection_masks"][0].numpy()[idx]
             })
+
+            print("Found object: class=" + detections[-1]["class_name"] + ", prob=" + str(detections[-1]["probability"]))
 
         return detections
 
@@ -79,64 +81,79 @@ class MaskRCNN():
         image = cv2.imread(image_path)
 
         image = self.draw_bounding_boxes(image, detections)
-                                 
-        self.show_image(image)
+        image, mask = self.draw_mask(image, detections)
 
+        self.show_image(image)
+        self.show_image(mask)
 
         return image
 
     def draw_bounding_boxes(self, image, detections):
-        height, width, _ = image.shape
-        
         for detection in detections:
-            # print("object found class=" + str() + ", prob=" + str(scores[idx]))
 
-            y1 = int(detection["bounding_box"][0] * height)
-            x1 = int(detection["bounding_box"][1] * width)
-            y2 = int(detection["bounding_box"][2] * height)
-            x2 = int(detection["bounding_box"][3] * width)
+            x1, y1, x2, y2 = self.get_box_coords(image.shape, detection)
 
-            image = cv2.rectangle(image, (x1, y1), (x2, y2), (0,0,255), 2)
+            image = cv2.rectangle(image, (x1, y1), (x2, y2), (0, 0, 255), 2)
 
             text = str(detection["class_name"]) + " " + str(round(detection["probability"]*100)) + "%"
 
             cv2.putText(img=image,
                         text=text,
-                        org=(x1,y1-3), 
+                        org=(x1, y1-3),
                         fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         fontScale=1,
-                        color = (0,0,255),
+                        color=(0, 0, 255),
                         thickness=2,
                         lineType=2)
-
-            mask = detection["mask"].astype(np.float32)
-            self.show_image(mask)
-
-            mask = cv2.resize(mask, (x2-x1, y2-y1)) 
-            mask = mask > -5
-            mask = mask.astype(np.uint8)
-            mask *= 255
-            self.show_image(mask)
-
-            image_box = image[y1:y2, x1:x2, :]
-
-            alpha=0.3
-            color = (0,0,1)
-            for c in range(3):
-                image_box[:, :, c] = np.where(mask == 255,
-                                    image_box[:, :, c] *
-                                    (1 - alpha) + alpha * color[c] * 255,
-                                    image_box[:, :, c])
-
-            image[y1:y2, x1:x2, :] = image_box
-
-            # TODO: image wird jedes mal überschrieben, original image beibehalten
-
 
         return image
 
     def draw_mask(self, image, detections):
-        return
+        image_mask = np.zeros(image.shape, dtype=np.uint8)
+
+        for detection in detections:
+            mask = detection["mask"].astype(np.float32)
+            self.show_image(mask)
+
+            x1, y1, x2, y2 = self.get_box_coords(image.shape, detection)
+
+            mask = cv2.resize(mask, (x2-x1, y2-y1))
+
+            # --- detection_masks
+            mask_binary = np.zeros(mask.shape)
+            mask_binary[mask > .5] = 1
+
+            # --- mask_predictions
+            # mask_binary = mask > -10
+            # mask_binary = mask_binary.astype(np.uint8)
+
+            mask_binary *= 255
+            self.show_image(mask_binary)
+
+            image_box = image[y1:y2, x1:x2, :]
+
+            alpha = 0.3
+            color = (0, 0, 1)
+            for c in range(3):
+                image_box[:, :, c] = np.where(mask_binary == 255,
+                                              image_box[:, :, c] *
+                                              (1 - alpha) + alpha * color[c] * 255,
+                                              image_box[:, :, c])
+
+            image[y1:y2, x1:x2, :] = image_box
+            image_mask[y1:y2, x1:x2, 0] = mask_binary
+            image_mask[y1:y2, x1:x2, 1] = mask_binary
+            image_mask[y1:y2, x1:x2, 2] = mask_binary
+
+        return image, image_mask
+
+    def get_box_coords(self, image_shape, detection):
+        y1 = int(detection["bounding_box"][0] * image_shape[0])
+        x1 = int(detection["bounding_box"][1] * image_shape[1])
+        y2 = int(detection["bounding_box"][2] * image_shape[0])
+        x2 = int(detection["bounding_box"][3] * image_shape[1])
+
+        return x1, y1, x2, y2
 
     def evaluate(self):
         return
@@ -176,7 +193,7 @@ class MaskRCNN():
         combined.show()
 
         return masks
-        
+
 
 def convert_from_cv2_to_image(img: np.ndarray):
     # return PIL.Image.fromarray(img)
@@ -190,25 +207,26 @@ def convert_from_image_to_cv2(img: PIL.Image):
 
 def main():
     type_name = "bottle"
-    images_path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", type_name, "validate", "images")
+    images_path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", type_name, "train", "images")
     test_image_path = os.path.join(images_path, "contamination", "013.png")
     model_path = os.path.join(os.getcwd(), "models", "mask_rcnn", "1")
 
     model = MaskRCNN(model_path=os.path.join(model_path, "saved_model"),
-                     label_path=os.path.join(model_path, "labels.json"), 
+                     label_path=os.path.join(model_path, "labels.json"),
                      type_name=type_name,
                      only_cpu=True)
 
-    # detections = model.predict(image_path, threshold=0.5)
+    detections = model.predict(test_image_path, threshold=0.5)
 
-    # np.save("./predictions.npy", detections)
+    np.save("./predictions.npy", detections)
     detections_file = np.load("./predictions.npy", allow_pickle=True)
-    
+
+    # print(detections_file)
 
     model.visualize(test_image_path, detections_file)
 
     # masks = model.infer_on_webserver("http://iras-w06o:9930", os.path.join(path, "broken_small", "001.png"))
 
-   
+
 if __name__ == '__main__':
     main()

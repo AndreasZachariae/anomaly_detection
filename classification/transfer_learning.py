@@ -42,7 +42,7 @@ class TransferLearning():
         else:
             self.model = load_model(os.path.join(self.model_path, load_model_name))
             print("Trained model loaded: " + load_model_name)
-    
+
         print(self.labels)
 
         self.train_dataset = None
@@ -52,7 +52,7 @@ class TransferLearning():
         self.val_accuracy = []
         self.val_loss = []
 
-    def load_data(self, image_path, image_size, batch_size, validation_split=0.2):
+    def load_data(self, image_path, image_size, batch_size):
         """Splits dataset in validation and training data default=20/80%
 
         Args:
@@ -198,7 +198,7 @@ class TransferLearning():
             image(cv2.Mat): predicted image to display
         """
         image = cv2.imread(image_path)
-        image = cv2.resize(image, (900,900))
+        image = cv2.resize(image, (900, 900))
         tensor = tf.convert_to_tensor(image, dtype=tf.float32)
         tensor = tf.expand_dims(tensor, 0)
         prediction = self.model.predict(tensor)
@@ -232,9 +232,9 @@ def main():
             models = [model_name for model_name in os.listdir(model_path) if model_name.endswith(".h5")]
             for model_name in models:
                 model = TransferLearning(type_name=type_name,
-                                        model_path=model_path,
-                                        load_model_name=model_name,
-                                        only_cpu=True)
+                                         model_path=model_path,
+                                         load_model_name=model_name,
+                                         only_cpu=True)
 
                 if type_name == "bottle":
                     test_image_path = os.path.join(images_path, "validate", "images", "contamination", "013.png")
@@ -252,25 +252,30 @@ def main():
             # mobilenetv2 = 0.0005
             # resnet50 = 0.001
             # inceptionresnetv2 = 0.005
-            for model_name, learning_rate, epochs in [("mobilenetv2", 0.001, 20),
-                                                    ("inceptionresnetv2", 0.001, 20),
-                                                    ("resnet50", 0.001, 20)]:
+            for model_name, learning_rate, epochs in [("mobilenetv2", 0.001, 10),
+                                                      ("inceptionresnetv2", 0.001, 10),
+                                                      ("resnet50", 0.001, 10)]:
                 print(model_name, learning_rate, epochs)
 
                 model = TransferLearning(model_path=model_path,
-                                        type_name=type_name,
-                                        base_model=model_name,
-                                        only_cpu=True)
+                                         type_name=type_name,
+                                         base_model=model_name,
+                                         only_cpu=False)
 
                 model.load_data(image_path=images_path,
                                 image_size=(900, 900),
-                                batch_size=16,
-                                validation_split=0.2)
+                                batch_size=32)
 
                 # model.show_example_images()
                 model.train(learning_rate, epochs)
-                model.train(learning_rate/10, int(epochs/2))
-                # model.fine_tuning(learning_rate/100, epochs)
+                model.train(learning_rate/5, epochs)
+                model.train(learning_rate/25, epochs)
+
+                model.load_data(image_path=images_path,
+                                image_size=(900, 900),
+                                batch_size=2)
+
+                model.fine_tuning(learning_rate/1000, int(epochs/2))
                 model.plot_metrics(metric_path=model_path)
                 # model.evaluate()
                 model.save_model()
