@@ -2,7 +2,7 @@
 dataset/**/*.png
 dataset/**/*.txt
 dataset/**/*.xml
-models/**/*.h5
+models/transfer_learning/old
 models/**/saved_model/
 .vscode
 
