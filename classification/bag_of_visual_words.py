@@ -119,7 +119,7 @@ class BagOfVisualWords():
         print("Create bag of codewords...")
         features = self.get_codewords(img_descr)
         
-        print("Predict training data with Support Vector Machine...")
+        print("Predict data with Support Vector Machine...")
         predictions = self.svm.predict(features)
         
         self.accuracy = [accuracy_score(self.val_dataset[1], predictions)]
@@ -196,26 +196,41 @@ class BagOfVisualWords():
         return (img_des, descriptors)
         
     # DATA PROCESSING FUNCTIONS -----------------------------------------------
-    def load_data(self, image_path, image_size=None, batch_size=None, validation_split=0.2):
-        """
-        Loads the data at a specific path and randomly splits it into training and validation datasets.
+    # def load_data(self, image_path, image_size=None, batch_size=None, validation_split=0.2):
+    #     """
+    #     Loads the data at a specific path and randomly splits it into training and validation datasets.
 
-        Parameters
-        ----------
-        image_path : str
-            Path to the images.
-        validation_split : float, optional
-            The ratio of validation data to validation + training data. The default is 0.2.
+    #     Parameters
+    #     ----------
+    #     image_path : str
+    #         Path to the images.
+    #     validation_split : float, optional
+    #         The ratio of validation data to validation + training data. The default is 0.2.
 
-        Returns
-        -------
-        None.
+    #     Returns
+    #     -------
+    #     None.
 
-        """
-        self.class_dict = self.get_classes(image_path)
-        dataset = self.load_all(image_path) # dataset = (classes, labels)
-        self.train_dataset, self.val_dataset = self.random_split(
-            dataset[0], dataset[1], validation_split) 
+    #     """
+    #     self.class_dict = self.get_classes(image_path)
+    #     dataset = self.load_all(image_path) # dataset = (classes, labels)
+    #     self.train_dataset, self.val_dataset = self.random_split(
+    #         dataset[0], dataset[1], validation_split) 
+        
+    def load_data(self, image_path, image_size=None, batch_size=None):
+        # TODO: add description
+        train_path = os.path.join(image_path, "train", "images")
+        self.class_dict = self.get_classes(train_path)
+        self.train_dataset = self.load_all(train_path)#self.shuffle_data(self.load_all(train_path))
+        self.val_dataset = self.load_all(os.path.join(image_path, "test", "images"), is_test=True)
+        
+    # def shuffle_data(self, dataset):
+    #     # TODO: add description
+    #     p = np.random.permutation(len(dataset[0]))
+    #     images = dataset[0]
+    #     labels = dataset[1]
+        
+    #     return (images[p], labels[p])
         
     def random_split(self, images, labels, split_ratio):
         """
@@ -256,7 +271,7 @@ class BagOfVisualWords():
         
         return (imgs_train, lbls_train), (imgs_val, lbls_val)
         
-    def load_all(self, path):
+    def load_all(self, path, is_test=False):
         """
         Make a list of all images' paths and their classes respectively.
 
@@ -291,14 +306,15 @@ class BagOfVisualWords():
         var_coeff = np.std(values)/np.mean(values)
         for key in occ:
             print(f"- {occ[key]} images of class \"{self.class_dict[key]}\".")
-        if var_coeff >= 0.1:
-            max_imgs = min(values)
-            for key in occ:
-                pos = np.where(img_classes == key)[0]
-                random_indices = np.random.choice(pos, pos.shape[0]-max_imgs, replace=False)
-                img_paths = np.delete(img_paths, random_indices)
-                img_classes = np.delete(img_classes, random_indices)
-            print(f"Using only {max_imgs} images per class.")           
+        if not is_test:
+            if var_coeff >= 0.1:
+                max_imgs = min(values)
+                for key in occ:
+                    pos = np.where(img_classes == key)[0]
+                    random_indices = np.random.choice(pos, pos.shape[0]-max_imgs, replace=False)
+                    img_paths = np.delete(img_paths, random_indices)
+                    img_classes = np.delete(img_classes, random_indices)
+                print(f"Using only {max_imgs} images per class.")           
             
         return (img_paths, img_classes)
         
@@ -318,15 +334,15 @@ class BagOfVisualWords():
 
         """
         # create folder if it does not exist already
-        if not os.path.exists(os.path.join(os.getcwd(), "models", model_name)):
-            os.makedirs(os.path.join(os.getcwd(), "models", model_name))
+        if not os.path.exists(os.path.join(os.getcwd(), "models", "bovw", model_name)):
+            os.makedirs(os.path.join(os.getcwd(), "models", "bovw", model_name))
         
         # save the codebook, svm and classes dicionary
         np.save(
-            os.path.join("models", model_name, f"bovw_codebook_acc{round(self.accuracy[0]*100)}.npy"),
+            os.path.join("models", "bovw", model_name, f"bovw_codebook_acc{round(self.accuracy[0]*100)}.npy"),
             self.codebook, allow_pickle=True)
-        joblib.dump(self.svm, os.path.join("models", model_name, f"bovw_svm_acc{round(self.accuracy[0]*100)}.joblib"))
-        with open(os.path.join("models", model_name, "bovw_classes.pkl"), "wb") as dict_file:
+        joblib.dump(self.svm, os.path.join("models", "bovw", model_name, f"bovw_svm_acc{round(self.accuracy[0]*100)}.joblib"))
+        with open(os.path.join("models", "bovw", model_name, "bovw_classes.pkl"), "wb") as dict_file:
             pickle.dump(self.class_dict, dict_file)
    
     def get_model(self, path):
@@ -422,20 +438,20 @@ class BagOfVisualWords():
 def main():
     load_model = True
     data_path = os.path.join(
-        os.getcwd(), "dataset", "augmented_dataset", "bottle", "images")
+        os.getcwd(), "dataset", "augmented_dataset", "bottle")#, "train", "images")
     
     if load_model:
-        model_path = os.path.join(os.getcwd(), "models", "bovw")
+        model_path = os.path.join(os.getcwd(), "models", "bovw", "bovw_hazelnut")
         
         model = BagOfVisualWords(model_path)
-        pred, idx, name, img = model.predict(os.path.join(data_path, "good", "001.png"))
+        pred, idx, name, img = model.predict(os.path.join(data_path, "test", "images", "print", "016.png"))
         print(f"Predicted \"{name}\" with {pred[0][idx]*100:.2f} % confidence.")
     else:
         model = BagOfVisualWords()
-        model.load_data(data_path, validation_split=0.4)
+        model.load_data(data_path)#, validation_split=0.4)
         model.train(svm_type="rbf", svm_iter=-1, k=200, k_iter=3)
-        print("Accuracy:", model.accuracy)
-        model.save_model(model_name="bovw_v2")
+        print("Accuracy:", model.accuracy[-1])
+        model.save_model(model_name="bottle")
 
 if __name__ == '__main__':
     main()
