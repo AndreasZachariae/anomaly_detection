@@ -6,21 +6,21 @@ from classification.transfer_learning import TransferLearning
 from classification.bag_of_visual_words import BagOfVisualWords
 
 class Ensemble():
-    def __init__(self, image_path, image_size, batch_size, only_cpu, model_path=None):
-        if only_cpu:
-            os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-            print("Disabled GPU devices")
+    def __init__(self, model_path, models, object_type="bottle"):    
+        self.model_list = list()
+        
+        for model in models:
+            if model[0] == "transfer_learning":
+                # TODO: remove _old
+                self.model_list.append(TransferLearning(type_name=object_type,
+                                                        model_path=os.path.join(model_path, f"{model[0]}_old", object_type),
+                                                        load_model_name=model[1],
+                                                        only_cpu=True))
+            elif model[0] == "bovw":
+                self.model_list.append(BagOfVisualWords(os.path.join(model_path, model[0], model[1])))
 
-        self.model_list = [TransferLearning("mobilenetv2", False, os.path.join("models","mobilenetv2.h5")),
-                           TransferLearning("resnet50", False, os.path.join("models","resnet50.h5")),
-                           TransferLearning("inceptionresnetv2", False, os.path.join("models","inceptionresnetv2.h5")),
-                           BagOfVisualWords(os.path.join("models","bovw"))]
-
+        # TODO: create SVM
         self.meta_model = None
-        self.train_dataset = None
-        self.val_dataset = None
-        self.accuracy = dict()
-        self.loss = dict()
 
     def predict_all(self, image_path):
         predictions = list()
@@ -43,26 +43,29 @@ class Ensemble():
         
         if weights is not None:
             weighted_probs = np.array([weights]).T * probs
-            majority = np.argmax(np.sum(weighted_probs, axis=0))
+            majority_idx = np.argmax(np.sum(weighted_probs, axis=0))
         else:
             if soft:
-                majority = np.argmax(np.sum(probs, axis=0))
+                majority_idx = np.argmax(np.sum(probs, axis=0))
             else:
                 cnt = Counter(predictions[:,0])
-                majority = cnt.most_common(1)[0][0] 
+                majority_idx = cnt.most_common(1)[0][0] 
                 
-        return majority
+        majority_name = predictions[np.where(predictions[:, 0] == majority_idx), 1][0][0]
+                
+        return (majority_idx, majority_name)
 
 def main():
-    path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", "bottle", "images")
+    model_path = os.path.join(os.getcwd(), "models")
+    models = [["transfer_learning", "inceptionresnetv2.h5"],
+              ["transfer_learning", "mobilenetv2.h5"],
+              ["transfer_learning", "resnet50.h5"],
+              ["bovw", "bottle"]]
 
-    ensemble = Ensemble(image_path=path,
-                        image_size=(900, 900),
-                        batch_size=16,
-                        only_cpu=True,
-                        model_path="models/mobilenetv2.h5")
+    ensemble = Ensemble(model_path=model_path, models=models, object_type="bottle")
 
-    ensemble.predict_all(os.path.join(path, "good", "000.png"))
+    path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", "bottle", "test", "images")
+    ensemble.predict_all(os.path.join(path, "broken_large", "004.png"))
 
 if __name__ == '__main__':
     main()
