@@ -19,15 +19,17 @@ class BoxCreator():
         None.
 
         """
-        for obj_type in os.listdir(self.path):
-            type_path = os.path.join(self.path, obj_type)
-            for file in os.listdir(type_path):
-                if file.endswith('.png'):
-                    img_path = os.path.join(type_path, file)
-                    img = cv2.imread(img_path)
-                    bboxes = self.get_boxPoints(img, obj_type)
-                    self.create_xml(img_path, img, bboxes)
-                    
+        for type_name in os.listdir(self.path):
+            for split_name in ["test", "train", "validate"]:
+                gt_path = os.path.join(self.path, type_name, split_name, "ground_truth")
+                for class_name in os.listdir(gt_path):
+                    for image_name in os.listdir(os.path.join(gt_path, class_name)):
+                        if image_name.endswith('.png'):
+                            image_path = os.path.join(gt_path, class_name, image_name)
+                            img = cv2.imread(image_path)
+                            bboxes = self.get_boxPoints(img, class_name)
+                            self.create_xml(image_path, img, bboxes)
+                                                
         
     def get_boxPoints(self, img, obj_class):
         """
@@ -131,13 +133,13 @@ class BoxCreator():
             ymax.text = str(b[4])
         
         tree = ElementTree(annotation)
-        xml_path = path.replace(".png", "_annotation.xml")
+        xml_path = path.replace(".png", ".xml")
         tree.write(xml_path)
         
         
 
 def main():
-    gt_path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", "bottle", "ground_truth")
+    gt_path = os.path.join(os.getcwd(), "dataset", "augmented_dataset")
     
     creator = BoxCreator(gt_path)
     creator.annotate()
