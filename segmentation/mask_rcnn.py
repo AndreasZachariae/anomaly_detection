@@ -1,5 +1,4 @@
 import json
-from json.tool import main
 from typing import List
 import requests
 import os
@@ -10,6 +9,7 @@ import numpy as np
 import cv2
 import tensorflow as tf
 import matplotlib.pyplot as plt
+import xml.etree.ElementTree as ET
 
 
 class MaskRCNN():
@@ -73,7 +73,7 @@ class MaskRCNN():
                 "mask": predictions["detection_masks"][0].numpy()[idx]
             })
 
-            print("Found object: class=" + detections[-1]["class_name"] + ", prob=" + str(detections[-1]["probability"]))
+            # print("Found object: class=" + detections[-1]["class_name"] + ", prob=" + str(detections[-1]["probability"]))
 
         return detections
 
@@ -155,8 +155,77 @@ class MaskRCNN():
 
         return x1, y1, x2, y2
 
-    def evaluate(self):
+    def evaluate(self, images_path, threshold=0.5):
+        y_true = []
+        y_pred = []
+        y_pred_prob = [0, 0]
+        good_class_id = self.labels.index("good")
+
+        for class_name in os.listdir(images_path):
+            for image_name in os.listdir(os.path.join(images_path, class_name)):
+                image_path = os.path.join(images_path, class_name, image_name)
+                predictions = self.predict(image_path, threshold)
+                annotations = self.load_annotation(image_path)
+
+                num_pred = len(predictions)
+                num_true = len(annotations)
+                print(num_pred, num_true)
+
+                if num_true == 0 and num_pred == 0:
+                    y_true.append(good_class_id)
+                    y_pred.append(good_class_id)
+
+                if num_pred < num_true:
+                    max_objects = range(num_true)
+                else:
+                    max_objects = range(num_pred)
+
+                for index in max_objects:
+                    if index >= num_pred:
+                        y_pred.append(good_class_id)
+                        y_true.append(annotations[index]["true_class_id"])
+                    elif index >= num_true:
+                        y_true.append(good_class_id)
+                        y_pred.append(predictions[index]["class_id"])
+                        y_pred_prob[0] += predictions[index]["probability"]
+                        y_pred_prob[1] += 1
+                    else:
+                        y_true.append(annotations[index]["true_class_id"])
+                        y_pred.append(predictions[index]["class_id"])
+                        y_pred_prob[0] += predictions[index]["probability"]
+                        y_pred_prob[1] += 1
+
+                # print(predictions[index]["class_id"], annotations[index]["true_class_id"])
+                print(y_pred)
+                print(y_true)
+                if not y_pred_prob[1] == 0:
+                    print("mean_prob", y_pred_prob[0]/(y_pred_prob[1]))
+
+            break
+
         return
+
+    def load_annotation(self, test_image_path):
+        xml_path = test_image_path.replace("images", "ground_truth").replace(".png", "_mask.xml")
+        tree = ET.parse(xml_path) 
+        root = tree.getroot()
+            
+        annotations = []
+
+        for member in root.findall('object'):
+            true_class_name = member[0].text # class name
+        
+            # bbox coordinates
+            xmin = int(member[4][0].text)
+            ymin = int(member[4][1].text)
+            xmax = int(member[4][2].text)
+            ymax = int(member[4][3].text)
+            # store data in list
+            annotations.append({"true_class_id": self.labels.index(true_class_name),
+                                "true_class_name": true_class_name,
+                                "true_bounding_box": [xmin, ymin, xmax, ymax]})
+
+        return annotations
 
     def show_image(self, image):
         plt.figure()
@@ -187,7 +256,7 @@ class MaskRCNN():
             masks.append(PIL.Image.open(mask_bytes))
             masks[-1].show()
 
-        cv_mask = convert_from_image_to_cv2(masks[0])
+        cv_mask = self.convert_from_image_to_cv2(masks[0])
 
         combined = PIL.Image.composite(image, image, masks[0])
         combined.show()
@@ -207,7 +276,7 @@ def convert_from_image_to_cv2(img: PIL.Image):
 
 def main():
     type_name = "bottle"
-    images_path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", type_name, "train", "images")
+    images_path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", type_name, "validate", "images")
     test_image_path = os.path.join(images_path, "contamination", "013.png")
     model_path = os.path.join(os.getcwd(), "models", "mask_rcnn", "1")
 
@@ -216,14 +285,16 @@ def main():
                      type_name=type_name,
                      only_cpu=True)
 
-    detections = model.predict(test_image_path, threshold=0.5)
+    # detections = model.predict(test_image_path, threshold=0.5)
 
-    np.save("./predictions.npy", detections)
+    # np.save("./predictions.npy", detections)
     detections_file = np.load("./predictions.npy", allow_pickle=True)
 
     # print(detections_file)
 
-    model.visualize(test_image_path, detections_file)
+    # model.visualize(test_image_path, detections_file)
+
+    model.evaluate(images_path)
 
     # masks = model.infer_on_webserver("http://iras-w06o:9930", os.path.join(path, "broken_small", "001.png"))
 
