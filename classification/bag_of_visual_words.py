@@ -8,8 +8,7 @@ import numpy as np
 
 from sklearn.svm import SVC 
 from scipy.cluster.vq import kmeans,vq, whiten
-# from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, confusion_matrix
 
 
 # CLASS -----------------------------------------------------------------------
@@ -20,8 +19,7 @@ class BagOfVisualWords():
         self.train_dataset = None
         self.val_dataset = None
         self.accuracy = None
-        self.precision = None
-        self.f1 = None
+        self.confusion_matrix = None
         
     # CLASSIFICATION FUNCTIONS ------------------------------------------------
     def predict(self, image_path):
@@ -45,9 +43,7 @@ class BagOfVisualWords():
             The classified image.
 
         """
-        print("Extract keypoint features...")
         (img_descr, _) = self.get_descriptor_lists(np.array([image_path]), self.descriptor)
-        print("Create bag of codewords...")
         features = self.get_codewords(img_descr)
         
         prediction = self.svm.predict_proba(features)
@@ -106,7 +102,7 @@ class BagOfVisualWords():
         
     def evaluate(self):
         """
-        Calculates accuracy, precision, recall and f1 score.
+        Calculates accuracy and confusion matrix.
 
         Returns
         -------
@@ -123,10 +119,7 @@ class BagOfVisualWords():
         predictions = self.svm.predict(features)
         
         self.accuracy = [accuracy_score(self.val_dataset[1], predictions)]
-        # ??? delete the following metrics? Necessary?
-        self.precision = precision_score(self.val_dataset[1], predictions, average='weighted')
-        self.recall = recall_score(self.val_dataset[1], predictions, average='weighted')
-        self.f1 = f1_score(self.val_dataset[1], predictions, average='weighted')
+        self.confusion_matrix = confusion_matrix(self.val_dataset[1], predictions)
 
         print("Calculating done.")
     
@@ -152,12 +145,6 @@ class BagOfVisualWords():
             # count the occurences of the codebook's words
             for w in words:
                 features[i][w] += 1
-        
-        # normalise features as many machine learning estimators (e.g. SVM with 
-        # rbf kernel) assume standard normally distributed data
-        # ??? remove scaling, because otherwise single images cannot be predicted correctly
-        # scaler = StandardScaler().fit(features) 
-        # features = scaler.transform(features)
         
         return features
     
@@ -221,55 +208,54 @@ class BagOfVisualWords():
         # TODO: add description
         train_path = os.path.join(image_path, "train", "images")
         self.class_dict = self.get_classes(train_path)
-        self.train_dataset = self.load_all(train_path)#self.shuffle_data(self.load_all(train_path))
+        self.train_dataset = self.shuffle_data(self.load_all(train_path))
         self.val_dataset = self.load_all(os.path.join(image_path, "test", "images"), is_test=True)
         
-    # def shuffle_data(self, dataset):
-    #     # TODO: add description
-    #     p = np.random.permutation(len(dataset[0]))
-    #     images = dataset[0]
-    #     labels = dataset[1]
+    def shuffle_data(self, dataset):
+        # TODO: add description
+        p = np.random.permutation(len(dataset[1]))
+        images = dataset[0]
+        labels = dataset[1]
+        return (images[p], labels[p])
         
-    #     return (images[p], labels[p])
-        
-    def random_split(self, images, labels, split_ratio):
-        """
-        Randomly splits a given dataset into training and test data.
+    # def random_split(self, images, labels, split_ratio):
+    #     """
+    #     Randomly splits a given dataset into training and test data.
 
-        Parameters
-        ----------
-        images : numpy.ndarray
-            An array containing all image paths.
-        labels : numpy.ndarray
-            An array containing the class labels corresponding to the images.
-        split_ratio : float
-            The ratio of validation data to validation + training data.
+    #     Parameters
+    #     ----------
+    #     images : numpy.ndarray
+    #         An array containing all image paths.
+    #     labels : numpy.ndarray
+    #         An array containing the class labels corresponding to the images.
+    #     split_ratio : float
+    #         The ratio of validation data to validation + training data.
 
-        Returns
-        -------
-        imgs_train : numpy.ndarray
-            An array containing all training image paths.
-        lbls_train : numpy.ndarray
-            An array containing all training class labels.
-        imgs_test : numpy.ndarray
-            An array containing all test image paths.
-        lbls_test : numpy.ndarray
-            An array containing all test class labels.
+    #     Returns
+    #     -------
+    #     imgs_train : numpy.ndarray
+    #         An array containing all training image paths.
+    #     lbls_train : numpy.ndarray
+    #         An array containing all training class labels.
+    #     imgs_test : numpy.ndarray
+    #         An array containing all test image paths.
+    #     lbls_test : numpy.ndarray
+    #         An array containing all test class labels.
 
-        """
-        # shuffle image paths and their class labels in the same way
-        p = np.random.permutation(len(images))
-        images = images[p]
-        labels = labels[p]
+    #     """
+    #     # shuffle image paths and their class labels in the same way
+    #     p = np.random.permutation(len(images))
+    #     images = images[p]
+    #     labels = labels[p]
         
-        # split into training and test data
-        split_value = int(len(images)*split_ratio)
-        imgs_train = images[split_value:]
-        lbls_train = labels[split_value:]
-        imgs_val = images[:split_value]
-        lbls_val = labels[:split_value]
+    #     # split into training and test data
+    #     split_value = int(len(images)*split_ratio)
+    #     imgs_train = images[split_value:]
+    #     lbls_train = labels[split_value:]
+    #     imgs_val = images[:split_value]
+    #     lbls_val = labels[:split_value]
         
-        return (imgs_train, lbls_train), (imgs_val, lbls_val)
+    #     return (imgs_train, lbls_train), (imgs_val, lbls_val)
         
     def load_all(self, path, is_test=False):
         """
@@ -438,20 +424,38 @@ class BagOfVisualWords():
 def main():
     load_model = True
     data_path = os.path.join(
-        os.getcwd(), "dataset", "augmented_dataset", "bottle")#, "train", "images")
+        os.getcwd(), "dataset", "augmented_dataset", "bottle")
     
     if load_model:
-        model_path = os.path.join(os.getcwd(), "models", "bovw", "bovw_hazelnut")
+        model_path = os.path.join(os.getcwd(), "models", "bovw", "bottle")
         
         model = BagOfVisualWords(model_path)
-        pred, idx, name, img = model.predict(os.path.join(data_path, "test", "images", "print", "016.png"))
+        pred, idx, name, img = model.predict(os.path.join(data_path, "test", "images", "contamination", "009.png"))
         print(f"Predicted \"{name}\" with {pred[0][idx]*100:.2f} % confidence.")
+        model.val_dataset = model.load_all(os.path.join(data_path, "test", "images"), is_test=True)
+        model.evaluate()
+        print(model.accuracy)
+        print(model.confusion_matrix)
+        # For hazelnut:
+        # 0.6666666666666666
+        # [[17 21  3  2  9]
+        #  [ 0 11 28  0  0]
+        #  [ 1  2 64  0  0]
+        #  [ 0  4 12 36  0]
+        #  [ 1  0  0  0 38]]
+        # For bottle:
+        # 0.612565445026178
+        # [[20 31  1  0]
+        #  [12 38  2  0]
+        #  [ 2  5 25 20]
+        #  [ 0  0  1 34]]
     else:
         model = BagOfVisualWords()
         model.load_data(data_path)#, validation_split=0.4)
-        model.train(svm_type="rbf", svm_iter=-1, k=200, k_iter=3)
+        model.train(svm_type="sigmoid", svm_iter=-1, k=200, k_iter=3)
         print("Accuracy:", model.accuracy[-1])
-        model.save_model(model_name="bottle")
+        print("Confusion matrix:", model.confusion_matrix)
+        model.save_model(model_name="bottle_sigmoid")
 
 if __name__ == '__main__':
     main()
