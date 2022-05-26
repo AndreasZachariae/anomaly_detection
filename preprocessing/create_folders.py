@@ -43,7 +43,7 @@ def create_folders(mvtec_path,
                 print(e)
 
             file_list = np.array(sorted(os.listdir(os.path.join(mvtec_path, type_name, "test", class_name))))
-            train_files, test_files, val_files = random_split(train_percentage=0.6,
+            train_files, test_files, val_files = data_split(train_percentage=0.6,
                                                               test_percentage=0.2,
                                                               val_percentage=0.2,
                                                               file_list=file_list)
@@ -67,7 +67,7 @@ def create_folders(mvtec_path,
 
         # Copy all images from mv_tec/train/good to augmented_dataset
         file_list = np.array(sorted(os.listdir(os.path.join(mvtec_path, type_name, "train", "good"))))
-        train_files, test_files, val_files = random_split(train_percentage,
+        train_files, test_files, val_files = data_split(train_percentage,
                                                           test_percentage,
                                                           val_percentage,
                                                           file_list)
@@ -82,9 +82,9 @@ def create_folders(mvtec_path,
                 shutil.copy2(src, dest)
 
 
-def random_split(train_percentage, test_percentage, val_percentage, file_list):
-    p = np.random.permutation(len(file_list))
-    file_list = file_list[p]
+def data_split(train_percentage, test_percentage, val_percentage, file_list):
+    # p = np.random.permutation(len(file_list))
+    # file_list = file_list[p]
 
     train_split = int(len(file_list)*train_percentage)
     test_split = int(len(file_list)*(test_percentage+train_percentage))
