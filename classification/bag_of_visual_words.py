@@ -8,8 +8,7 @@ import numpy as np
 
 from sklearn.svm import SVC 
 from scipy.cluster.vq import kmeans,vq, whiten
-# from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, confusion_matrix
 
 
 # CLASS -----------------------------------------------------------------------
@@ -20,8 +19,7 @@ class BagOfVisualWords():
         self.train_dataset = None
         self.val_dataset = None
         self.accuracy = None
-        self.precision = None
-        self.f1 = None
+        self.confusion_matrix = None
         
     # CLASSIFICATION FUNCTIONS ------------------------------------------------
     def predict(self, image_path):
@@ -104,7 +102,7 @@ class BagOfVisualWords():
         
     def evaluate(self):
         """
-        Calculates accuracy, precision, recall and f1 score.
+        Calculates accuracy and confusion matrix.
 
         Returns
         -------
@@ -121,10 +119,7 @@ class BagOfVisualWords():
         predictions = self.svm.predict(features)
         
         self.accuracy = [accuracy_score(self.val_dataset[1], predictions)]
-        # ??? delete the following metrics? Necessary?
-        self.precision = precision_score(self.val_dataset[1], predictions, average='weighted')
-        self.recall = recall_score(self.val_dataset[1], predictions, average='weighted')
-        self.f1 = f1_score(self.val_dataset[1], predictions, average='weighted')
+        self.confusion_matrix = confusion_matrix(self.val_dataset[1], predictions)
 
         print("Calculating done.")
     
@@ -150,12 +145,6 @@ class BagOfVisualWords():
             # count the occurences of the codebook's words
             for w in words:
                 features[i][w] += 1
-        
-        # normalise features as many machine learning estimators (e.g. SVM with 
-        # rbf kernel) assume standard normally distributed data
-        # ??? remove scaling, because otherwise single images cannot be predicted correctly
-        # scaler = StandardScaler().fit(features) 
-        # features = scaler.transform(features)
         
         return features
     
@@ -433,21 +422,39 @@ class BagOfVisualWords():
     
 # MAIN ------------------------------------------------------------------------    
 def main():
-    load_model = False
+    load_model = True
     data_path = os.path.join(
-        os.getcwd(), "dataset", "augmented_dataset", "bottle")#, "train", "images")
+        os.getcwd(), "dataset", "augmented_dataset", "bottle")
     
     if load_model:
-        model_path = os.path.join(os.getcwd(), "models", "bovw", "hazelnut")
+        model_path = os.path.join(os.getcwd(), "models", "bovw", "bottle")
         
         model = BagOfVisualWords(model_path)
-        pred, idx, name, img = model.predict(os.path.join(data_path, "test", "images", "print", "016.png"))
+        pred, idx, name, img = model.predict(os.path.join(data_path, "test", "images", "contamination", "009.png"))
         print(f"Predicted \"{name}\" with {pred[0][idx]*100:.2f} % confidence.")
+        model.val_dataset = model.load_all(os.path.join(data_path, "test", "images"), is_test=True)
+        model.evaluate()
+        print(model.accuracy)
+        print(model.confusion_matrix)
+        # For hazelnut:
+        # 0.6666666666666666
+        # [[17 21  3  2  9]
+        #  [ 0 11 28  0  0]
+        #  [ 1  2 64  0  0]
+        #  [ 0  4 12 36  0]
+        #  [ 1  0  0  0 38]]
+        # For bottle:
+        # 0.612565445026178
+        # [[20 31  1  0]
+        #  [12 38  2  0]
+        #  [ 2  5 25 20]
+        #  [ 0  0  1 34]]
     else:
         model = BagOfVisualWords()
         model.load_data(data_path)#, validation_split=0.4)
         model.train(svm_type="sigmoid", svm_iter=-1, k=200, k_iter=3)
         print("Accuracy:", model.accuracy[-1])
+        print("Confusion matrix:", model.confusion_matrix)
         model.save_model(model_name="bottle_sigmoid")
 
 if __name__ == '__main__':
