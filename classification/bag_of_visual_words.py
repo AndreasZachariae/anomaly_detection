@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.svm import SVC 
 from scipy.cluster.vq import kmeans,vq, whiten
-from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay, precision_score, recall_score, f1_score
 
 
 # CLASS -----------------------------------------------------------------------
@@ -19,8 +19,7 @@ class BagOfVisualWords():
         self.codebook, self.svm, self.class_dict = self.get_model(model_path) 
         self.train_dataset = None
         self.val_dataset = None
-        self.accuracy = None
-        self.confusion_matrix = None
+        self.metrics = dict()
         
     # CLASSIFICATION FUNCTIONS ------------------------------------------------
     def predict(self, image_path):
@@ -119,9 +118,12 @@ class BagOfVisualWords():
         print("Predict data with Support Vector Machine...")
         predictions = self.svm.predict(features)
         
-        self.accuracy = [accuracy_score(self.val_dataset[1], predictions)]
-        self.confusion_matrix = confusion_matrix(self.val_dataset[1], predictions)
-
+        self.metrics["accuracy"] = [accuracy_score(self.val_dataset[1], predictions)]
+        self.metrics["confusion matrix"] = confusion_matrix(self.val_dataset[1], predictions)
+        self.metrics["precision"] = precision_score(self.val_dataset[1], predictions, average="weighted")
+        self.metrics["recall"] = recall_score(self.val_dataset[1], predictions, average="weighted")
+        self.metrics["f1"] = f1_score(self.val_dataset[1], predictions, average="weighted")
+        
         print("Calculating done.")
         
         return predictions
@@ -328,9 +330,9 @@ class BagOfVisualWords():
         
         # save the codebook, svm and classes dicionary
         np.save(
-            os.path.join("models", "bovw", model_name, f"bovw_codebook_acc{round(self.accuracy[0]*100)}.npy"),
+            os.path.join("models", "bovw", model_name, f"bovw_codebook_acc{round(self.metrics['accuracy'][0]*100)}.npy"),
             self.codebook, allow_pickle=True)
-        joblib.dump(self.svm, os.path.join("models", "bovw", model_name, f"bovw_svm_acc{round(self.accuracy[0]*100)}.joblib"))
+        joblib.dump(self.svm, os.path.join("models", "bovw", model_name, f"bovw_svm_acc{round(self.metrics['accuracy'][0]*100)}.joblib"))
         with open(os.path.join("models", "bovw", model_name, "bovw_classes.pkl"), "wb") as dict_file:
             pickle.dump(self.class_dict, dict_file)
    
@@ -439,19 +441,24 @@ class BagOfVisualWords():
 # MAIN ------------------------------------------------------------------------    
 def main():
     load_model = True
+    object_type = "bottle"
     data_path = os.path.join(
-        os.getcwd(), "dataset", "augmented_dataset", "bottle")
+        os.getcwd(), "dataset", "augmented_dataset", object_type)
     
     if load_model:
-        model_path = os.path.join(os.getcwd(), "models", "bovw", "bottle")
+        model_path = os.path.join(os.getcwd(), "models", "bovw", object_type)
         
         model = BagOfVisualWords(model_path)
         pred, idx, name, img = model.predict(os.path.join(data_path, "test", "images", "contamination", "009.png"))
+        # pred, idx, name, img = model.predict(os.path.join(data_path, "test", "images", "print", "007.png"))
         print(f"Predicted \"{name}\" with {pred[0][idx]*100:.2f} % confidence.")
         model.val_dataset = model.load_all(os.path.join(data_path, "test", "images"), is_test=True)
         y_pred = model.evaluate()
-        print(model.accuracy)
-        print(model.confusion_matrix)            
+        print("Accuracy:", model.metrics["accuracy"])
+        print("Confusion matrix:", model.metrics["confusion matrix"])       
+        print("Precision:", model.metrics["precision"])
+        print("Recall:", model.metrics["recall"])
+        print("F1 score:", model.metrics["f1"])
         filepath = os.path.join(model_path, "confusion_matrix")
         model.plot_confusion_matrix(model.val_dataset[1], y_pred, filepath)
         # For hazelnut:
@@ -471,8 +478,8 @@ def main():
         model = BagOfVisualWords()
         model.load_data(data_path)#, validation_split=0.4)
         model.train(svm_type="sigmoid", svm_iter=-1, k=200, k_iter=3)
-        print("Accuracy:", model.accuracy[-1])
-        print("Confusion matrix:", model.confusion_matrix)
+        print("Accuracy:", model.metrics["accuracy"][-1])
+        print("Confusion matrix:", model.metrics["confusion matrix"])
         model.save_model(model_name="bottle_sigmoid")
 
 if __name__ == '__main__':
