@@ -15,15 +15,15 @@ class DataAugmentation():
             for split_name in ["test", "train", "validate"]:
                 split_path = os.path.join(self.folder_path, type_name, split_name)
                 for class_name in os.listdir(os.path.join(split_path, "images")):
-                    if class_name == "good":
-                        continue
-
                     for image_name in os.listdir(os.path.join(split_path, "images", class_name)):
                         mask_name = image_name.split('.')[0] + "_mask." + image_name.split('.')[1]
                         mask_path = os.path.join(split_path, "ground_truth", class_name)
                         image_path = os.path.join(split_path, "images", class_name)
 
-                        self.augment_image(image_path, image_name, mask_path, mask_name, type_name)
+                        if class_name == "good":
+                            self.create_empty_mask(image_path, image_name, mask_path, mask_name)
+                        else:
+                            self.augment_image(image_path, image_name, mask_path, mask_name, type_name)
 
     def augment_image(self, image_path, image_name, mask_path, mask_name, type_name):
         original_image = cv2.imread(os.path.join(image_path, image_name))
@@ -57,6 +57,12 @@ class DataAugmentation():
                     self.save_image(mask_rotated, mask_path, mask_name, flip, angle, value)
 
                     # self.show_three_images(original_image, image, mask_rotated)
+
+    def create_empty_mask(self, image_path, image_name, mask_path, mask_name):
+        original_image = cv2.imread(os.path.join(image_path, image_name))
+        empty_mask = np.zeros(original_image.shape, np.uint8)
+
+        cv2.imwrite(os.path.join(mask_path, mask_name), empty_mask)
 
     def show_three_images(self, image_original, image_augmented, mask_augmented):
         image_original = cv2.resize(image_original, (0, 0), None, .25, .25)
