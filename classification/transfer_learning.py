@@ -11,6 +11,13 @@ from tensorflow.keras.applications.inception_resnet_v2 import InceptionResNetV2
 from tensorflow.keras.applications.inception_resnet_v2 import preprocess_input as preprocess_inceptionresnetv2
 from tensorflow.keras.models import Model, load_model
 import json
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
+import numpy as np
+# import seaborn as sns
+# from make_confusion_matrix import make_confusion_matrix
+
+
+
 
 
 class TransferLearning():
@@ -35,7 +42,7 @@ class TransferLearning():
 
         if load_model_name is None:
             if base_model is None:
-                print("base_model name can not be None if load_model_name is given")
+                print("base_model name can not be None if load_model_name is also None")
             self.model = self.create_model(base_model, type_name, len(self.labels))
             print("Use pretrained base model and train new layers")
             print(self.model.summary())
@@ -176,6 +183,28 @@ class TransferLearning():
             path = os.path.join(metric_path, self.model.name + "_acc" + str(round(self.val_accuracy[-1]*100)))
             plt.savefig(path)
 
+    def plot_confusion_matrix(self, metric_path):
+
+        predictions = self.model.predict(self.val_dataset, verbose=1)
+        y_pred = tf.math.argmax(predictions, 1).numpy()
+        y_true = np.concatenate([y for x, y in self.val_dataset], axis=0)
+        # print(y_pred)
+        # print(y_true)
+
+        cf_matrix = confusion_matrix(y_true, y_pred)
+        print(cf_matrix)
+        disp = ConfusionMatrixDisplay.from_predictions(y_true, 
+                                                        y_pred, 
+                                                        display_labels=self.labels, 
+                                                        cmap=plt.cm.Blues,
+                                                        normalize="all")
+        disp.ax_.set_title("Confusion Matrix")
+
+        plt.show()
+        path = os.path.join(metric_path, self.model.name + "_matrix_acc" + str(round(self.val_accuracy[-1]*100)))
+        plt.savefig(path)
+
+
     def save_model(self):
         """Wrapper for Keras Model save function
 
@@ -221,12 +250,12 @@ class TransferLearning():
 
 
 def main():
-    load_model = False
+    load_model = True
     types = ["bottle", "hazelnut"]
 
     for type_name in types:
         images_path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", type_name)
-        model_path = os.path.join(os.getcwd(), "models", "transfer_learning", type_name)
+        model_path = os.path.join(os.getcwd(), "models", "transfer_learning", "old")
 
         if load_model:
             models = [model_name for model_name in os.listdir(model_path) if model_name.endswith(".h5")]
@@ -235,17 +264,24 @@ def main():
                                          model_path=model_path,
                                          load_model_name=model_name,
                                          only_cpu=True)
+                
 
-                if type_name == "bottle":
-                    test_image_path = os.path.join(images_path, "validate", "images", "contamination", "013.png")
-                else:
-                    test_image_path = os.path.join(images_path, "validate", "images", "print", "001.png")
+                # if type_name == "bottle":
+                #     test_image_path = os.path.join(images_path, "validate", "images", "contamination", "013.png")
+                # else:
+                #     test_image_path = os.path.join(images_path, "validate", "images", "print", "001.png")
 
-                prediction, class_index, class_name, image = model.predict(test_image_path)
+                # prediction, class_index, class_name, image = model.predict(test_image_path)
+                model.load_data(image_path=images_path,
+                                image_size=(900, 900),
+                                batch_size=8)
 
-                print(prediction)
-                cv2.imshow("predicted_class="+class_name, image)
-                cv2.waitKey(0)
+                # model.evaluate()
+                model.plot_confusion_matrix(metric_path=model_path)
+
+                # print(prediction)
+                # cv2.imshow("predicted_class="+class_name, image)
+                # cv2.waitKey(0)
 
         else:
             # Best learning rates:
@@ -260,11 +296,11 @@ def main():
                 model = TransferLearning(model_path=model_path,
                                          type_name=type_name,
                                          base_model=model_name,
-                                         only_cpu=False)
+                                         only_cpu=True)
 
                 model.load_data(image_path=images_path,
                                 image_size=(900, 900),
-                                batch_size=32)
+                                batch_size=4)
 
                 # model.show_example_images()
                 model.train(learning_rate, epochs)

@@ -10,6 +10,7 @@ import cv2
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ET
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
 
 
 class MaskRCNN():
@@ -203,7 +204,26 @@ class MaskRCNN():
 
             break
 
-        return
+        print(accuracy_score(y_true, y_pred))
+        print("mean_prob", y_pred_prob[0]/(y_pred_prob[1]))
+
+        return y_true, y_pred
+
+    def plot_confusion_matrix(self, y_true, y_pred, metric_path):
+        cf_matrix = confusion_matrix(self.y_test, self.y_pred_test)
+        print(cf_matrix)
+
+        disp = ConfusionMatrixDisplay.from_predictions(y_true, 
+                                                        y_pred, 
+                                                        display_labels=self.labels, 
+                                                        cmap=plt.cm.Blues,
+                                                        normalize=True)
+        disp.ax_.set_title("Confusion Matrix")
+
+        print(disp.confusion_matrix)
+        plt.show()
+        path = os.path.join(metric_path, "cf_matrix")
+        plt.savefig(path)
 
     def load_annotation(self, test_image_path):
         xml_path = test_image_path.replace("images", "ground_truth").replace(".png", "_mask.xml")
@@ -294,7 +314,9 @@ def main():
 
     # model.visualize(test_image_path, detections_file)
 
-    model.evaluate(images_path)
+    y_true, y_pred = model.evaluate(images_path)
+
+    model.plot_confusion_matrix(y_true, y_pred, metric_path=model_path)
 
     # masks = model.infer_on_webserver("http://iras-w06o:9930", os.path.join(path, "broken_small", "001.png"))
 
