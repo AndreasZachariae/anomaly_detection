@@ -45,9 +45,7 @@ class BagOfVisualWords():
             The classified image.
 
         """
-        print("Extract keypoint features...")
         (img_descr, _) = self.get_descriptor_lists(np.array([image_path]), self.descriptor)
-        print("Create bag of codewords...")
         features = self.get_codewords(img_descr)
         
         prediction = self.svm.predict_proba(features)
@@ -221,55 +219,54 @@ class BagOfVisualWords():
         # TODO: add description
         train_path = os.path.join(image_path, "train", "images")
         self.class_dict = self.get_classes(train_path)
-        self.train_dataset = self.load_all(train_path)#self.shuffle_data(self.load_all(train_path))
+        self.train_dataset = self.shuffle_data(self.load_all(train_path))
         self.val_dataset = self.load_all(os.path.join(image_path, "test", "images"), is_test=True)
         
-    # def shuffle_data(self, dataset):
-    #     # TODO: add description
-    #     p = np.random.permutation(len(dataset[0]))
-    #     images = dataset[0]
-    #     labels = dataset[1]
+    def shuffle_data(self, dataset):
+        # TODO: add description
+        p = np.random.permutation(len(dataset[1]))
+        images = dataset[0]
+        labels = dataset[1]
+        return (images[p], labels[p])
         
-    #     return (images[p], labels[p])
-        
-    def random_split(self, images, labels, split_ratio):
-        """
-        Randomly splits a given dataset into training and test data.
+    # def random_split(self, images, labels, split_ratio):
+    #     """
+    #     Randomly splits a given dataset into training and test data.
 
-        Parameters
-        ----------
-        images : numpy.ndarray
-            An array containing all image paths.
-        labels : numpy.ndarray
-            An array containing the class labels corresponding to the images.
-        split_ratio : float
-            The ratio of validation data to validation + training data.
+    #     Parameters
+    #     ----------
+    #     images : numpy.ndarray
+    #         An array containing all image paths.
+    #     labels : numpy.ndarray
+    #         An array containing the class labels corresponding to the images.
+    #     split_ratio : float
+    #         The ratio of validation data to validation + training data.
 
-        Returns
-        -------
-        imgs_train : numpy.ndarray
-            An array containing all training image paths.
-        lbls_train : numpy.ndarray
-            An array containing all training class labels.
-        imgs_test : numpy.ndarray
-            An array containing all test image paths.
-        lbls_test : numpy.ndarray
-            An array containing all test class labels.
+    #     Returns
+    #     -------
+    #     imgs_train : numpy.ndarray
+    #         An array containing all training image paths.
+    #     lbls_train : numpy.ndarray
+    #         An array containing all training class labels.
+    #     imgs_test : numpy.ndarray
+    #         An array containing all test image paths.
+    #     lbls_test : numpy.ndarray
+    #         An array containing all test class labels.
 
-        """
-        # shuffle image paths and their class labels in the same way
-        p = np.random.permutation(len(images))
-        images = images[p]
-        labels = labels[p]
+    #     """
+    #     # shuffle image paths and their class labels in the same way
+    #     p = np.random.permutation(len(images))
+    #     images = images[p]
+    #     labels = labels[p]
         
-        # split into training and test data
-        split_value = int(len(images)*split_ratio)
-        imgs_train = images[split_value:]
-        lbls_train = labels[split_value:]
-        imgs_val = images[:split_value]
-        lbls_val = labels[:split_value]
+    #     # split into training and test data
+    #     split_value = int(len(images)*split_ratio)
+    #     imgs_train = images[split_value:]
+    #     lbls_train = labels[split_value:]
+    #     imgs_val = images[:split_value]
+    #     lbls_val = labels[:split_value]
         
-        return (imgs_train, lbls_train), (imgs_val, lbls_val)
+    #     return (imgs_train, lbls_train), (imgs_val, lbls_val)
         
     def load_all(self, path, is_test=False):
         """
@@ -436,12 +433,12 @@ class BagOfVisualWords():
     
 # MAIN ------------------------------------------------------------------------    
 def main():
-    load_model = True
+    load_model = False
     data_path = os.path.join(
         os.getcwd(), "dataset", "augmented_dataset", "bottle")#, "train", "images")
     
     if load_model:
-        model_path = os.path.join(os.getcwd(), "models", "bovw", "bovw_hazelnut")
+        model_path = os.path.join(os.getcwd(), "models", "bovw", "hazelnut")
         
         model = BagOfVisualWords(model_path)
         pred, idx, name, img = model.predict(os.path.join(data_path, "test", "images", "print", "016.png"))
@@ -449,9 +446,9 @@ def main():
     else:
         model = BagOfVisualWords()
         model.load_data(data_path)#, validation_split=0.4)
-        model.train(svm_type="rbf", svm_iter=-1, k=200, k_iter=3)
+        model.train(svm_type="sigmoid", svm_iter=-1, k=200, k_iter=3)
         print("Accuracy:", model.accuracy[-1])
-        model.save_model(model_name="bottle")
+        model.save_model(model_name="bottle_sigmoid")
 
 if __name__ == '__main__':
     main()
