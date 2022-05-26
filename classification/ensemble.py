@@ -1,10 +1,11 @@
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 from collections import Counter
 from sklearn.svm import SVC 
 import pickle
 import joblib
-from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
 
 from classification.transfer_learning import TransferLearning
 from classification.bag_of_visual_words import BagOfVisualWords
@@ -121,7 +122,8 @@ class Ensemble():
         acc = [-1]
         if eval_paths[0] is not None or eval_paths[1] is not None:
             print("Evaluating...")
-            acc = [self.evaluate_meta(eval_paths[0], eval_paths[1], eval_paths[2])]
+            self.evaluate_meta(eval_paths[0], eval_paths[1], eval_paths[2])
+            acc = [self.metrics["meta learner"][0]]
             
         if save_name is not None:
             if acc[-1] > 0:
@@ -162,8 +164,9 @@ class Ensemble():
         return majority_idx
     
     def evaluate(self, features, labels, weights, confusion_labels=None):
-        if not "meta learner" in self.metrics:
-            self.evaluate_meta(features_labels=(features, labels))
+        predictions = dict()
+        meta_preds = self.evaluate_meta(features_labels=(features, labels))
+        predictions["meta learner"] = meta_preds
             
         num_models = len(self.model_list)
         num_classes = int(len(features[0])/num_models)
@@ -178,9 +181,13 @@ class Ensemble():
             weighted_preds.append(self.get_majority(img_proba, weights=weights))    
         
         self.metrics["hard voting"] = (accuracy_score(labels, hard_preds), confusion_matrix(labels, hard_preds))
+        predictions["hard voting"] = hard_preds
         self.metrics["soft voting"] = (accuracy_score(labels, soft_preds), confusion_matrix(labels, soft_preds))
+        predictions["soft voting"] = soft_preds
         self.metrics["weighted voting"] = (accuracy_score(labels, weighted_preds), confusion_matrix(labels, weighted_preds))
-            
+        predictions["weighted voting"] = weighted_preds 
+        
+        return predictions
         
     def evaluate_meta(self, load_pred_name=None, pred_images_path=None, pred_save_name=None, features_labels=None):
         if features_labels is not None:
@@ -197,7 +204,7 @@ class Ensemble():
         predictions = self.meta_model.predict(features)
         self.metrics["meta learner"] = (accuracy_score(labels, predictions), confusion_matrix(labels, predictions))
         
-        return self.metrics["meta learner"]
+        return predictions
         
     def set_class_dict(self, class_names):       
         class_indices = list(range(len(class_names)))
@@ -215,11 +222,25 @@ class Ensemble():
             for i in range(len(class_names)):
                 order.append(class_dict[translator[i]])
             self.class_order.append(order)
+            
+    def plot_confusion_matrix(self, y_true, y_pred, filepath):
+        labels = list()
+        for i in range(int(len(self.class_dict)/2)):
+            labels.append(self.class_dict[i])
+        disp = ConfusionMatrixDisplay.from_predictions(y_true, 
+                                                        y_pred, 
+                                                        display_labels=labels, 
+                                                        cmap=plt.cm.Blues,
+                                                        normalize="all")
+        disp.ax_.set_title("Confusion Matrix")
+        plt.savefig(filepath)
         
 
 def main():
     load_all = True
     load_data = False
+    
+    type_name = "bottle"
     
     models_path = os.path.join(os.getcwd(), "models")
     models = [["transfer_learning_old", "inceptionresnetv2.h5"],
@@ -230,18 +251,21 @@ def main():
     #           ["transfer_learning", "mobilenetv2_bottle_acc88.h5"],
     #           ["transfer_learning", "resnet50_bottle_acc84.h5"],
     #           ["bovw", "bottle"]]
-    images_path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", "bottle", "test", "images")
+    images_path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", type_name, "test", "images")
 
     
     if load_all:
-        ensemble = Ensemble(models_path=models_path, models=models, type_name="bottle", load_predinfo_name="val", load_meta_name="sigmoid_bottle_max-1_acc83")
+        ensemble = Ensemble(models_path=models_path, models=models, type_name=type_name, load_predinfo_name="val", load_meta_name="sigmoid_bottle_max-1_acc83")
         # print("Accuracy meta learner:", ensemble.evaluate_meta("test"))
         ensemble.load_prediction_info("test")
         features, labels = ensemble.load_predictions("test")
-        ensemble.evaluate(features, labels, weights=[0.87, 0.88, 0.84, 0.61])
+        predictions = ensemble.evaluate(features, labels, weights=[0.87, 0.88, 0.84, 0.61])
         print(ensemble.class_dict)
         for key in ensemble.metrics:
             print(f"--- Accuracy and confusion matrix {key}:\n{ensemble.metrics[key][0]}\n{ensemble.metrics[key][1]}")
+            filepath = os.path.join(models_path, "ensemble", type_name, key.split()[0]+"_confusion_matrix")
+            print(filepath)
+            ensemble.plot_confusion_matrix(labels, predictions[key], filepath)
         # Accuracies with old transfer_learning models (but accuracies of new ones as weights...), new bovw on test dataset:
         # Meta learner: 0.8324697329842932
         # Hard voting: 0.774869109947644

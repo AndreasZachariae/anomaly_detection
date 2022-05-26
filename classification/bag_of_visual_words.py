@@ -5,10 +5,11 @@ import joblib
 import pickle
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
 from sklearn.svm import SVC 
 from scipy.cluster.vq import kmeans,vq, whiten
-from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
 
 
 # CLASS -----------------------------------------------------------------------
@@ -122,6 +123,8 @@ class BagOfVisualWords():
         self.confusion_matrix = confusion_matrix(self.val_dataset[1], predictions)
 
         print("Calculating done.")
+        
+        return predictions
     
     def get_codewords(self, img_descr_list):
         """
@@ -420,6 +423,19 @@ class BagOfVisualWords():
 
         return class_dict
     
+    def plot_confusion_matrix(self, y_true, y_pred, filepath):
+        # TODO: add description
+        labels = list()
+        for i in range(int(len(self.class_dict)/2)):
+            labels.append(self.class_dict[i])
+        disp = ConfusionMatrixDisplay.from_predictions(y_true, 
+                                                        y_pred, 
+                                                        display_labels=labels, 
+                                                        cmap=plt.cm.Blues,
+                                                        normalize="all")
+        disp.ax_.set_title("Confusion Matrix")
+        plt.savefig(filepath)
+    
 # MAIN ------------------------------------------------------------------------    
 def main():
     load_model = True
@@ -433,9 +449,11 @@ def main():
         pred, idx, name, img = model.predict(os.path.join(data_path, "test", "images", "contamination", "009.png"))
         print(f"Predicted \"{name}\" with {pred[0][idx]*100:.2f} % confidence.")
         model.val_dataset = model.load_all(os.path.join(data_path, "test", "images"), is_test=True)
-        model.evaluate()
+        y_pred = model.evaluate()
         print(model.accuracy)
-        print(model.confusion_matrix)
+        print(model.confusion_matrix)            
+        filepath = os.path.join(model_path, "confusion_matrix")
+        model.plot_confusion_matrix(model.val_dataset[1], y_pred, filepath)
         # For hazelnut:
         # 0.6666666666666666
         # [[17 21  3  2  9]
