@@ -4,7 +4,7 @@ from collections import Counter
 from sklearn.svm import SVC 
 import pickle
 import joblib
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix
 
 from classification.transfer_learning import TransferLearning
 from classification.bag_of_visual_words import BagOfVisualWords
@@ -36,7 +36,7 @@ class Ensemble():
             self.load_meta(load_meta_name)
         if load_predinfo_name is not None:
             self.load_prediction_info(load_predinfo_name)  
-        self.accuracies = dict()
+        self.metrics = dict()
  
     def load_meta(self, meta_name):
         self.meta_model = joblib.load(os.path.join("models", "ensemble", self.type_name, "meta_learners", f"{meta_name}_meta.joblib"))
@@ -161,13 +161,13 @@ class Ensemble():
                 
         return majority_idx
     
-    def evaluate(self, features, labels, weights):
-        try:
-            meta_acc = self.accuracies["meta learner"]
-        except KeyError:
-            meta_acc = self.evaluate_meta(features_labels=(features, labels))
+    def evaluate(self, features, labels, weights, confusion_labels=None):
+        if not "meta learner" in self.metrics:
+            self.evaluate_meta(features_labels=(features, labels))
             
-        probs = np.reshape(features, (-1,len(self.model_list),len(self.model_list)))
+        num_models = len(self.model_list)
+        num_classes = int(len(features[0])/num_models)
+        probs = np.reshape(features, (-1, num_models, num_classes))
         
         hard_preds = list()
         soft_preds = list()
@@ -177,9 +177,9 @@ class Ensemble():
             soft_preds.append(self.get_majority(img_proba, soft=True))
             weighted_preds.append(self.get_majority(img_proba, weights=weights))    
         
-        self.accuracies["hard voting"] = accuracy_score(labels, hard_preds)
-        self.accuracies["soft voting"] = accuracy_score(labels, soft_preds)
-        self.accuracies["weighted voting"] = accuracy_score(labels, weighted_preds)
+        self.metrics["hard voting"] = (accuracy_score(labels, hard_preds), confusion_matrix(labels, hard_preds))
+        self.metrics["soft voting"] = (accuracy_score(labels, soft_preds), confusion_matrix(labels, soft_preds))
+        self.metrics["weighted voting"] = (accuracy_score(labels, weighted_preds), confusion_matrix(labels, weighted_preds))
             
         
     def evaluate_meta(self, load_pred_name=None, pred_images_path=None, pred_save_name=None, features_labels=None):
@@ -195,9 +195,9 @@ class Ensemble():
             print("Invalid parameters. Either load_pred_name, pred_images_path or features_labels has to be specified.")
             
         predictions = self.meta_model.predict(features)
-        self.accuracies["meta learner"] = accuracy_score(labels, predictions)
+        self.metrics["meta learner"] = (accuracy_score(labels, predictions), confusion_matrix(labels, predictions))
         
-        return self.accuracies["meta learner"]
+        return self.metrics["meta learner"]
         
     def set_class_dict(self, class_names):       
         class_indices = list(range(len(class_names)))
@@ -239,8 +239,9 @@ def main():
         ensemble.load_prediction_info("test")
         features, labels = ensemble.load_predictions("test")
         ensemble.evaluate(features, labels, weights=[0.87, 0.88, 0.84, 0.61])
-        for key in ensemble.accuracies:
-            print(f"Accuracy {key}: {ensemble.accuracies[key]}")
+        print(ensemble.class_dict)
+        for key in ensemble.metrics:
+            print(f"--- Accuracy and confusion matrix {key}:\n{ensemble.metrics[key][0]}\n{ensemble.metrics[key][1]}")
         # Accuracies with old transfer_learning models (but accuracies of new ones as weights...), new bovw on test dataset:
         # Meta learner: 0.8324697329842932
         # Hard voting: 0.774869109947644
@@ -251,7 +252,9 @@ def main():
         ensemble = Ensemble(models_path=models_path, models=models, type_name="bottle", load_predinfo_name="val")
         predictions, labels = ensemble.load_predictions("val")
         ensemble.train(predictions, labels, kernel_function="sigmoid", max_iter=-1, eval_paths=("test",None,None), save_name="sigmoid_bottle_max-1")
-        print("Accuracy:", ensemble.accuracies["meta learner"])
+        print("Accuracy:", ensemble.metrics["meta learner"][0])
+        print("Confusion matrix:", ensemble.metrics["meta learner"][1])
+
     else:
         ensemble = Ensemble(models_path=models_path, models=models, type_name="bottle")
         predictions, labels = ensemble.predict_level_0(images_path.replace("test", "validate"), save_name="val_new")
@@ -262,14 +265,17 @@ def main():
             max_iter=-1, 
             eval_paths=(None, images_path, "test_new"), 
             save_name="sigmoid_new")
-        print("Accuracy:", ensemble.accuracies["meta learner"])
+        print("Accuracy:", ensemble.metrics["meta learner"][0])
+        print("Confusion matrix:", ensemble.metrics["meta learner"][1])
+
         
     
     img_path = os.path.join(images_path, "good", "019_train.png")
-    print("Meta:", ensemble.predict(img_path, meta=True))
-    print("Weighted:", ensemble.predict(img_path, weights=[0.87, 0.88, 0.84, 0.61]))
-    print("Soft voting:", ensemble.predict(img_path, soft=True))
-    print("Hard voting:", ensemble.predict(img_path))
+    print("--- Predictions for image", img_path)
+    print("\tMeta:", ensemble.predict(img_path, meta=True))
+    print("\tWeighted:", ensemble.predict(img_path, weights=[0.87, 0.88, 0.84, 0.61]))
+    print("\tSoft voting:", ensemble.predict(img_path, soft=True))
+    print("\tHard voting:", ensemble.predict(img_path))
         
         
     
