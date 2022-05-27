@@ -102,11 +102,12 @@ class BagOfVisualWords():
         
     def evaluate(self):
         """
-        Calculates accuracy and confusion matrix.
+        Calculates accuracy, precision, recall, f1 score and confusion matrix.
 
         Returns
         -------
-        None.
+        predictions : numpy.ndarray
+            The classes predicted by the trained SVM for the validation dataset.
 
         """
         print("Calculating metrics...") 
@@ -209,15 +210,39 @@ class BagOfVisualWords():
     #     self.train_dataset, self.val_dataset = self.random_split(
     #         dataset[0], dataset[1], validation_split) 
         
-    def load_data(self, image_path, image_size=None, batch_size=None):
-        # TODO: add description
+    def load_data(self, image_path):
+        """
+        Loads the training and validation dataset.
+
+        Parameters
+        ----------
+        image_path : str
+            Parent path to the images for the datasets.
+
+        Returns
+        -------
+        None.
+
+        """
         train_path = os.path.join(image_path, "train", "images")
         self.class_dict = self.get_classes(train_path)
         self.train_dataset = self.shuffle_data(self.load_all(train_path))
-        self.val_dataset = self.load_all(os.path.join(image_path, "test", "images"), is_test=True)
+        self.val_dataset = self.load_all(train_path.replace("train", "test"), is_test=True)
         
     def shuffle_data(self, dataset):
-        # TODO: add description
+        """
+        Shuffles the images and their class labels.
+
+        Parameters
+        ----------
+        dataset : tuple
+            Contains the images and their class labels.
+
+        Returns
+        -------
+        Tuple of shuffled images and their class labels.
+
+        """
         p = np.random.permutation(len(dataset[1]))
         images = dataset[0]
         labels = dataset[1]
@@ -270,6 +295,8 @@ class BagOfVisualWords():
         ----------
         path : str
             Path to the directory containing all images sorted by class names.
+        is_test : bool
+            Determines whether the ratio of images per class is checked and adjusted.
 
         Returns
         -------
@@ -316,7 +343,7 @@ class BagOfVisualWords():
 
         Parameters
         ----------
-        model_name : st, optional
+        model_name : str, optional
             Name of the folder to be created containing the model files. The default is "bovw".
 
         Returns
@@ -426,7 +453,23 @@ class BagOfVisualWords():
         return class_dict
     
     def plot_confusion_matrix(self, y_true, y_pred, filepath):
-        # TODO: add description
+        """
+        Plots the confusion matrix resulting from true and predicted class indices.
+
+        Parameters
+        ----------
+        y_true : numpy.ndarray
+            The ground truth class indices.
+        y_pred : numpy.ndarray
+            The predicted class indices.
+        filepath : str
+            Path including the filename for the plot to be stored.
+
+        Returns
+        -------
+        None.
+
+        """
         labels = list()
         for i in range(int(len(self.class_dict)/2)):
             labels.append(self.class_dict[i])
@@ -449,38 +492,44 @@ def main():
         model_path = os.path.join(os.getcwd(), "models", "bovw", object_type)
         
         model = BagOfVisualWords(model_path)
-        pred, idx, name, img = model.predict(os.path.join(data_path, "test", "images", "contamination", "009.png"))
-        # pred, idx, name, img = model.predict(os.path.join(data_path, "test", "images", "print", "007.png"))
-        print(f"Predicted \"{name}\" with {pred[0][idx]*100:.2f} % confidence.")
+        # pred, idx, name, img = model.predict(os.path.join(data_path, "test", "images", "contamination", "013.png"))
+        # pred, idx, name, img = model.predict(os.path.join(data_path, "test", "images", "print", "011.png"))
+        # print(f"Predicted \"{name}\" with {pred[0][idx]*100:.2f} % confidence.")
         model.val_dataset = model.load_all(os.path.join(data_path, "test", "images"), is_test=True)
         y_pred = model.evaluate()
-        print("Accuracy:", model.metrics["accuracy"])
+        print("Accuracy:", model.metrics["accuracy"][-1])
         print("Confusion matrix:", model.metrics["confusion matrix"])       
         print("Precision:", model.metrics["precision"])
         print("Recall:", model.metrics["recall"])
         print("F1 score:", model.metrics["f1"])
         filepath = os.path.join(model_path, "confusion_matrix")
         model.plot_confusion_matrix(model.val_dataset[1], y_pred, filepath)
-        # For hazelnut:
-        # 0.6666666666666666
-        # [[17 21  3  2  9]
-        #  [ 0 11 28  0  0]
-        #  [ 1  2 64  0  0]
-        #  [ 0  4 12 36  0]
-        #  [ 1  0  0  0 38]]
-        # For bottle:
-        # 0.612565445026178
-        # [[20 31  1  0]
-        #  [12 38  2  0]
-        #  [ 2  5 25 20]
-        #  [ 0  0  1 34]]
+        # ----- For hazelnut: -------------------------------------------------
+        # Accuracy: 0.7137096774193549
+        # Confusion matrix: [[46  3  3  0  0]
+        #                    [ 1 25  9  4  0]
+        #                    [22  3 41  1  0]
+        #                    [12  5  8 27  0]
+        #                    [ 0  0  0  0 38]]
+        # Precision: 0.7400080016778633
+        # Recall: 0.7137096774193549
+        # F1 score: 0.7109692388733931
+        # ----- For bottle: ---------------------------------------------------
+        # Accuracy: 0.6020942408376964
+        # Confusion matrix: [[27 17  8  0]
+        #                    [ 7 27 13  5]
+        #                    [ 0  2 27 23]
+        #                    [ 0  0  1 34]]
+        # Precision: 0.626505059628692
+        # Recall: 0.6020942408376964
+        # F1 score: 0.5949857941750475
     else:
         model = BagOfVisualWords()
-        model.load_data(data_path)#, validation_split=0.4)
-        model.train(svm_type="sigmoid", svm_iter=-1, k=200, k_iter=3)
+        model.load_data(data_path)
+        model.train(svm_type="rbf", svm_iter=-1, k=200, k_iter=3)
         print("Accuracy:", model.metrics["accuracy"][-1])
         print("Confusion matrix:", model.metrics["confusion matrix"])
-        model.save_model(model_name="bottle_sigmoid")
+        model.save_model(model_name="hazelnut")
 
 if __name__ == '__main__':
     main()

@@ -10,14 +10,12 @@ from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDis
 from classification.transfer_learning import TransferLearning
 from classification.bag_of_visual_words import BagOfVisualWords
 
-# TODO: function descriptions
 
 class Ensemble():
     def __init__(self, models_path, models, type_name="bottle", load_predinfo_name=None, load_meta_name=None):
         self.type_name = type_name
         self.model_list = list()
         for model in models:
-            # TODO: Change back to equals (==)
             if "transfer_learning" in model[0]:
                 self.model_list.append(
                     TransferLearning(
@@ -41,10 +39,36 @@ class Ensemble():
         self.accuracies = dict()
  
     def load_meta(self, meta_name):
+        """
+        Loads the meta model from a file.
+
+        Parameters
+        ----------
+        meta_name : str
+            The filename's prefix.
+
+        Returns
+        -------
+        None.
+
+        """
         self.meta_model = joblib.load(os.path.join("models", "ensemble", self.type_name, "meta_learners", f"{meta_name}_meta.joblib"))
         print("Pretrained meta learner loaded.")
     
     def load_prediction_info(self, predinfo_name):
+        """
+        Loads the model order and dict.
+
+        Parameters
+        ----------
+        predinfo_name : str
+            The filenames' prefix.
+
+        Returns
+        -------
+        None.
+
+        """
         pred_path = os.path.join(os.getcwd(), "models", "ensemble", self.type_name, "preds_data")
         self.class_order = np.load(
             os.path.join(pred_path, f"{predinfo_name}_order.npy"),
@@ -53,6 +77,22 @@ class Ensemble():
                 self.class_dict = pickle.load(dict_file) 
     
     def load_predictions(self, pred_name):
+        """
+        Load the prediction files.
+
+        Parameters
+        ----------
+        pred_name : str
+            The filenames' prefix.
+
+        Returns
+        -------
+        predictions : numpy.ndarray
+            Contains the predicted class probabilities for every model.
+        labels : numpy.ndarray
+            Contains the ground truth class indices.
+
+        """
         target_path = os.path.join(os.getcwd(), "models", "ensemble", self.type_name, "preds_data")
         predictions = np.load(
             os.path.join(target_path, f"{pred_name}_features.npy"),
@@ -63,11 +103,47 @@ class Ensemble():
         return (predictions, labels)
     
     def save_meta(self, meta_model, meta_name):
+        """
+        Saves the trained meta learner.
+
+        Parameters
+        ----------
+        meta_model : sklearn.svm.SVC
+            The meta learner to be saved.
+        meta_name : str
+            Prefix for the filename.
+
+        Returns
+        -------
+        None.
+
+        """
         target_path = os.path.join(os.getcwd(), "models", "ensemble", self.type_name, "meta_learners")
         joblib.dump(meta_model, os.path.join(target_path, f"{meta_name}_meta.joblib")) 
         print(f"Saved meta learner in {target_path}.")
         
     def save_predictions(self, predictions, labels, order, dictionary, pred_name):
+        """
+        Saves all infos that will be necessary for reloading the level 0 predictions.
+
+        Parameters
+        ----------
+        predictions : numpy.ndarray
+            Contains the predicted class probabilities for every model.
+        labels : numpy.ndarray
+            Contains the ground truth class indices.
+        order : list
+            Contains the level 0 classifiers' orders of classes corresponding the meta learners order
+        dictionary : dict
+            This ensemble's dict to assign the class indices to the class names.
+        pred_name : str
+            Prefix for the filenames.
+
+        Returns
+        -------
+        None.
+
+        """
         target_path = os.path.join(os.getcwd(), "models", "ensemble", self.type_name, "preds_data")
         if not os.path.exists(target_path):
             os.makedirs(target_path)
@@ -85,11 +161,29 @@ class Ensemble():
         print(f"Saved predictions and info in {target_path}.")
 
     def predict_level_0(self, images_path, save_name=None):
+        """
+        Implements the level 0 classification with all the ensemble's models.
+
+        Parameters
+        ----------
+        images_path : str
+            Path to the training images.
+        save_name : str, optional
+            Name for the predictions to be saved as if desired.
+
+        Returns
+        -------
+        predictions : numpy.ndarray
+            Contains the predicted class probabilities for every model.
+        labels : numpa.ndarray
+            Contains the ground truth class indices.
+
+        """
         print("Calculating level 0 predictions...") 
         class_names = os.listdir(images_path)        
 
         self.set_class_dict(class_names)
-        self.set_class_order(class_names, self.class_dict)
+        self.set_class_order(len(class_names), self.class_dict)
         
         predictions = list()
         labels = list()
@@ -116,6 +210,29 @@ class Ensemble():
         return (predictions, labels)    
     
     def train(self, features, labels, kernel_function="rbf", max_iter=80000, eval_paths=(None, None, None), save_name=None):
+        """
+        Trains the meta learner.
+
+        Parameters
+        ----------
+        features : numpy.ndarray
+            The training input containing the level 0 classification class probabilities.
+        labels : numpy.ndarray
+            The ground truth class indices.
+        kernel_function : str, optional
+            Kerne function for the meta learner (support vector machine). The default is "rbf".
+        max_iter : int, optional
+            Maximal iterations for the meta learner. No limit when set to -1. The default is 80000.
+        eval_paths : TYPE, optional
+            Paths for the evaluation of the meta learner if evaluation is desired. The default is (None, None, None).
+        save_name : TYPE, optional
+            Filename for the meta learner to be saved as if desired. The default is None.
+
+        Returns
+        -------
+        None.
+
+        """
         print("Training meta model...")
         self.meta_model = SVC(kernel=kernel_function, max_iter=max_iter, probability=True)
         self.meta_model.fit(features, labels)
@@ -133,6 +250,28 @@ class Ensemble():
         print("Training done.")
         
     def predict(self, image_path, meta=False, weights=None, soft=False):
+        """
+        Implements level 1 classification for a single image.
+
+        Parameters
+        ----------
+        image_path : str
+            Path to an image (including the image file's name).
+        meta : bool, optional
+            Determines whether the classification is desired to be performed by the meta learner. The default is False.
+        weights : list, optional
+            A list of weights only being passed when weighted voting is desired.
+        soft : bool, optional
+            Determines whether soft voting is desired. Otherwise, hard voting will be performed. The default is False.
+
+        Returns
+        -------
+        pred_class_idx : int
+            The predicted class index.
+        pred_class_name : str
+            The predicted class name.
+
+        """
         predictions = list()
 
         for i,model in enumerate(self.model_list):
@@ -151,7 +290,24 @@ class Ensemble():
         return (pred_class_idx, pred_class_name)
     
     def get_majority(self, probs, weights=None, soft=False):
-        # TODO: what to do with a tie? in voting, currently: the first occurance
+        """
+        Implements hard voting, soft voting and weighted voting.
+
+        Parameters
+        ----------
+        probs : numpy.ndarray
+            Contains the probabilities for each class predicted by all level 0 classfiers.
+        weights : list, optional
+            A list of weights only being passed when weighted voting is desired.
+        soft : bool, optional
+            Determines whether soft voting is desired. Otherwise, hard voting will be performed. The default is False.
+
+        Returns
+        -------
+        majority_idx : int
+            The resulting predicted class (level 1 prediction).
+
+        """
         if weights is not None:
             weighted_probs = np.array([weights]).T * probs
             majority_idx = np.argmax(np.sum(weighted_probs, axis=0))
@@ -165,6 +321,15 @@ class Ensemble():
         return majority_idx
     
     def evaluate(self, features, labels, weights, confusion_labels=None):
+        """
+        Calculates accuracy, precision, recall, f1 score and confusion matrix for the meta learner and all implemented voting types.
+
+        Returns
+        -------
+        predictions : dict
+            The predicted classes sorted by the prediction method (meta learner, voting types).
+
+        """
         predictions = dict()
         meta_preds = self.evaluate_meta(features_labels=(features, labels))
         predictions["meta learner"] = meta_preds
@@ -205,6 +370,15 @@ class Ensemble():
         return predictions
         
     def evaluate_meta(self, load_pred_name=None, pred_images_path=None, pred_save_name=None, features_labels=None):
+        """
+        Calculates accuracy, precision, recall, f1 score and confusion matrix of the meta learner.
+
+        Returns
+        -------
+        predictions : numpy.ndarray
+            The classes predicted by the  meta learner for the evaluation.
+
+        """
         if features_labels is not None:
             features = features_labels[0]
             labels = features_labels[1]
@@ -255,12 +429,40 @@ class Ensemble():
         
         return predictions
         
-    def set_class_dict(self, class_names):       
+    def set_class_dict(self, class_names):   
+        """
+        Determines the class dict based on the given class names.
+
+        Parameters
+        ----------
+        class_names : list
+            Contains the class names.
+
+        Returns
+        -------
+        None.
+
+        """
         class_indices = list(range(len(class_names)))
         self.class_dict = dict(zip(class_names, class_indices))
         self.class_dict.update(dict(zip(class_indices, class_names)))
      
-    def set_class_order(self, class_names, class_dict):       
+    def set_class_order(self, nr_of_classes, class_dict):  
+        """
+        Calculates the level 0 classifiers' orders of classes corresponding the meta learners order.
+
+        Parameters
+        ----------
+        nr_of_classes : int
+            The amount of classes.
+        class_dict : dict
+            This ensemble's dict to assign the class indices to the class names.
+
+        Returns
+        -------
+        None.
+
+        """
         self.class_order = list()
         for model in self.model_list:
             try:
@@ -268,30 +470,49 @@ class Ensemble():
             except AttributeError:
                 translator = model.class_dict
             order = list()
-            for i in range(len(class_names)):
+            for i in range(nr_of_classes):
                 order.append(class_dict[translator[i]])
             self.class_order.append(order)
             
     def plot_confusion_matrix(self, y_true, y_pred, filepath):
+        """
+        Plots the confusion matrix resulting from true and predicted class indices.
+
+        Parameters
+        ----------
+        y_true : numpy.ndarray
+            The ground truth class indices.
+        y_pred : numpy.ndarray
+            The predicted class indices.
+        filepath : str
+            Path including the filename for the plot to be stored.
+
+        Returns
+        -------
+        None.
+
+        """
         labels = list()
         for i in range(int(len(self.class_dict)/2)):
             labels.append(self.class_dict[i])
         disp = ConfusionMatrixDisplay.from_predictions(y_true, 
-                                                        y_pred, 
-                                                        display_labels=labels, 
-                                                        cmap=plt.cm.Blues,
-                                                        normalize="all")
+                                                       y_pred,
+                                                       display_labels=labels, 
+                                                       cmap=plt.cm.Blues,
+                                                       normalize="all")
         disp.ax_.set_title("Confusion Matrix")
         plt.savefig(filepath)
         
 
 def main():
-    load_all = True
+    load_all = False
     load_data = False
     
     type_name = "bottle"
+    weights = [0.87, 0.88, 0.84, 0.60] # the values equal the models' appr. accuracies
     
     models_path = os.path.join(os.getcwd(), "models")
+    # first colulmn needs to be bovw for BagOfVisualWords and contain transfer_learning for TransferLearning
     models = [["transfer_learning_old", "inceptionresnetv2.h5"],
               ["transfer_learning_old", "mobilenetv2.h5"],
               ["transfer_learning_old", "resnet50.h5"],
@@ -305,10 +526,9 @@ def main():
     
     if load_all:
         ensemble = Ensemble(models_path=models_path, models=models, type_name=type_name, load_predinfo_name="val", load_meta_name="sigmoid_bottle_max-1_acc83")
-        # print("Accuracy meta learner:", ensemble.evaluate_meta("test"))
         ensemble.load_prediction_info("test")
         features, labels = ensemble.load_predictions("test")
-        predictions = ensemble.evaluate(features, labels, weights=[0.87, 0.88, 0.84, 0.61])
+        predictions = ensemble.evaluate(features, labels, weights=weights)
         print(ensemble.class_dict)
         for metric in ensemble.metrics:
             if not metric == "confusion matrix":
@@ -320,10 +540,26 @@ def main():
                 else:
                     print(f"\t{voting_type}: {ensemble.metrics[metric][voting_type]}")
         # Accuracies with old transfer_learning models (but accuracies of new ones as weights...), new bovw on test dataset:
-        # Meta learner: 0.8324697329842932
-        # Hard voting: 0.774869109947644
-        # Soft voting: 0.7382198952879581
-        # Weighted voting: 0.6701570680628273
+        # Meta learner: 
+        #     Accuracy:
+        #     Precision:
+        #     Recall:
+        #     F1 Score:
+        # Hard voting: 
+        #     Accuracy:
+        #     Precision:
+        #     Recall:
+        #     F1 Score:
+        # Soft voting: 
+        #     Accuracy:
+        #     Precision:
+        #     Recall:
+        #     F1 Score:
+        # Weighted voting:  
+        #     Accuracy:
+        #     Precision:
+        #     Recall:
+        #     F1 Score:
         
     elif load_data:
         ensemble = Ensemble(models_path=models_path, models=models, type_name="bottle", load_predinfo_name="val")
@@ -344,17 +580,13 @@ def main():
             save_name="sigmoid_new")
         print("Accuracy:", ensemble.metrics["meta learner"][0])
         print("Confusion matrix:", ensemble.metrics["meta learner"][1])
-
-        
     
-    img_path = os.path.join(images_path, "good", "019_train.png")
+    img_path = os.path.join(images_path, "good", "156_train.png")
     print("--- Predictions for image", img_path)
     print("\tMeta:", ensemble.predict(img_path, meta=True))
-    print("\tWeighted:", ensemble.predict(img_path, weights=[0.87, 0.88, 0.84, 0.61]))
+    print("\tWeighted:", ensemble.predict(img_path, weights=weights))
     print("\tSoft voting:", ensemble.predict(img_path, soft=True))
     print("\tHard voting:", ensemble.predict(img_path))
         
-        
-    
 if __name__ == '__main__':
     main()
