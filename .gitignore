@@ -5,6 +5,7 @@ dataset/**/*.xml
 models/transfer_learning/old
 models/**/*.h5
 models/**/saved_model/
+models/mask_rcnn/eval_data/*.jpg
 .vscode
 
 # Byte-compiled / optimized / DLL files

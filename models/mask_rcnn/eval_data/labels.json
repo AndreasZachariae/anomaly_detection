@@ -1,0 +1,1717 @@
+{
+    "0": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.23777778446674347,
+                0.20444443821907043,
+                0.847777783870697,
+                0.8544444441795349
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "1": [],
+    "2": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.3566666543483734,
+                0.70333331823349,
+                0.644444465637207,
+                0.8199999928474426
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "3": [],
+    "4": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.0,
+                0.37444445490837097,
+                0.4655555486679077,
+                0.5566666722297668
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "5": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.7200000286102295,
+                0.3722222149372101,
+                0.7833333611488342,
+                0.46222221851348877
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        },
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.26777777075767517,
+                0.27888888120651245,
+                0.7200000286102295,
+                0.7277777791023254
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "6": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.19555555284023285,
+                0.40888887643814087,
+                0.3199999928474426,
+                0.698888897895813
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "7": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.42444443702697754,
+                0.7055555582046509,
+                0.7055555582046509,
+                0.8322222232818604
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "8": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.4377777874469757,
+                0.6377778053283691,
+                0.746666669845581,
+                0.8277778029441833
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "9": [],
+    "10": [],
+    "11": [],
+    "12": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.14888888597488403,
+                0.17888888716697693,
+                0.5899999737739563,
+                0.8355555534362793
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "13": [],
+    "14": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.2822222113609314,
+                0.2644444406032562,
+                0.7277777791023254,
+                0.70333331823349
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "15": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.33888888359069824,
+                0.1733333319425583,
+                0.5488888621330261,
+                0.34555554389953613
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "16": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.29777777194976807,
+                0.2988888919353485,
+                0.6833333373069763,
+                0.6800000071525574
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "17": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.19777777791023254,
+                0.5066666603088379,
+                0.5,
+                0.9677777886390686
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "18": [],
+    "19": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.15777777135372162,
+                0.2199999988079071,
+                0.7233333587646484,
+                0.8600000143051147
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "20": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.4722222089767456,
+                0.2922222316265106,
+                1.0,
+                0.7855555415153503
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "21": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.07777778059244156,
+                0.2455555498600006,
+                0.6811110973358154,
+                0.9222221970558167
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "22": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.12333333492279053,
+                0.4099999964237213,
+                0.7955555319786072,
+                0.9388889074325562
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "23": [],
+    "24": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.601111114025116,
+                0.21444444358348846,
+                0.8355555534362793,
+                0.5344444513320923
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "25": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.15111111104488373,
+                0.301111102104187,
+                0.7433333396911621,
+                0.8588888645172119
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "26": [],
+    "27": [],
+    "28": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.5222222208976746,
+                0.6044444441795349,
+                0.7344444394111633,
+                0.8022222518920898
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "29": [],
+    "30": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.11555555462837219,
+                0.21666666865348816,
+                0.8455555438995361,
+                0.8844444155693054
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "31": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.2844444513320923,
+                0.3566666543483734,
+                0.6722221970558167,
+                0.6944444179534912
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "32": [],
+    "33": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.30000001192092896,
+                0.6666666865348816,
+                0.6111111044883728,
+                0.8255555629730225
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "34": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.6555555462837219,
+                0.7766666412353516,
+                0.6755555272102356,
+                0.8077777624130249
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        },
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.5099999904632568,
+                0.17555555701255798,
+                0.7655555605888367,
+                0.3266666531562805
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "35": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.2911111116409302,
+                0.653333306312561,
+                0.5699999928474426,
+                0.8244444727897644
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "36": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.2666666805744171,
+                0.1688888818025589,
+                0.7377777695655823,
+                0.3655555546283722
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "37": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.1411111056804657,
+                0.11888889223337173,
+                0.6711111068725586,
+                0.8088889122009277
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "38": [],
+    "39": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.6288889050483704,
+                0.18777777254581451,
+                0.804444432258606,
+                0.46444445848464966
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "40": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.17222222685813904,
+                0.5311111211776733,
+                0.3522222340106964,
+                0.7777777910232544
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "41": [],
+    "42": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.18222221732139587,
+                0.4300000071525574,
+                0.2933333218097687,
+                0.6755555272102356
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "43": [],
+    "44": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.15111111104488373,
+                0.301111102104187,
+                0.7433333396911621,
+                0.8588888645172119
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "45": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.1411111056804657,
+                0.38111111521720886,
+                0.8088889122009277,
+                0.8922222256660461
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "46": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.2866666615009308,
+                0.2622222304344177,
+                0.7288888692855835,
+                0.7066666483879089
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "47": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.33444443345069885,
+                0.1388888955116272,
+                0.8399999737739563,
+                0.847777783870697
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "48": [],
+    "49": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.2844444513320923,
+                0.554444432258606,
+                0.28555554151535034,
+                0.5555555820465088
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        },
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.2800000011920929,
+                0.3033333420753479,
+                0.7122222185134888,
+                0.7288888692855835
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "50": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.12333333492279053,
+                0.4099999964237213,
+                0.7955555319786072,
+                0.9388889074325562
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "51": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.2800000011920929,
+                0.28555554151535034,
+                0.7166666388511658,
+                0.7233333587646484
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "52": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.1411111056804657,
+                0.38111111521720886,
+                0.8088889122009277,
+                0.8922222256660461
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "53": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.3266666531562805,
+                0.14222222566604614,
+                0.852222204208374,
+                0.8711110949516296
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "54": [],
+    "55": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.34111112356185913,
+                0.17777778208255768,
+                0.6266666650772095,
+                0.28333333134651184
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "56": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.7833333611488342,
+                0.6411111354827881,
+                0.8155555725097656,
+                0.6600000262260437
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        },
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.17555555701255798,
+                0.5266666412353516,
+                0.33888888359069824,
+                0.7755555510520935
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "57": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.8177777528762817,
+                0.49222221970558167,
+                0.8533333539962769,
+                0.5022222399711609
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        },
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.22333332896232605,
+                0.17444443702697754,
+                0.4744444489479065,
+                0.3377777636051178
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "58": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.2966666519641876,
+                0.28333333134651184,
+                0.7355555295944214,
+                0.7288888692855835
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "59": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.6544444561004639,
+                0.1711111068725586,
+                0.7400000095367432,
+                0.4300000071525574
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "60": [],
+    "61": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.5122222304344177,
+                0.18222221732139587,
+                0.7433333396911621,
+                0.30666667222976685
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "62": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.27444443106651306,
+                0.014444444328546524,
+                0.5433333516120911,
+                0.46888887882232666
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "63": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.16111111640930176,
+                0.32555556297302246,
+                0.4611110985279083,
+                0.8055555820465088
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "64": [],
+    "65": [],
+    "66": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.30888888239860535,
+                0.30666667222976685,
+                0.6377778053283691,
+                0.6888889074325562
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "67": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.1411111056804657,
+                0.11888889223337173,
+                0.6711111068725586,
+                0.8088889122009277
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "68": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.2800000011920929,
+                0.27888888120651245,
+                0.7177777886390686,
+                0.7144444584846497
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "69": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.5066666603088379,
+                0.17777778208255768,
+                0.8288888931274414,
+                0.5755555629730225
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "70": [],
+    "71": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.46666666865348816,
+                0.19111111760139465,
+                0.8399999737739563,
+                0.8488888740539551
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "72": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.15777777135372162,
+                0.011111111380159855,
+                0.699999988079071,
+                0.5822222232818604
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "73": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.18111111223697662,
+                0.3611111044883728,
+                0.8488888740539551,
+                0.8677777647972107
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "74": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.6688888669013977,
+                0.23888888955116272,
+                0.7322221994400024,
+                0.2944444417953491
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        },
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.15111111104488373,
+                0.23777778446674347,
+                0.3444444537162781,
+                0.5299999713897705
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "75": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.2800000011920929,
+                0.28555554151535034,
+                0.7166666388511658,
+                0.7233333587646484
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "76": [],
+    "77": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.15666666626930237,
+                0.1455555558204651,
+                0.601111114025116,
+                0.8266666531562805
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "78": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.19555555284023285,
+                0.40888887643814087,
+                0.3199999928474426,
+                0.698888897895813
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "79": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.2633333206176758,
+                0.6566666960716248,
+                0.7688888907432556,
+                0.8611111044883728
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "80": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.2922222316265106,
+                0.301111102104187,
+                0.7211111187934875,
+                0.6766666769981384
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "81": [],
+    "82": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.14888888597488403,
+                0.2477777749300003,
+                0.8711110949516296,
+                0.8500000238418579
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "83": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.20888888835906982,
+                0.25999999046325684,
+                0.8644444346427917,
+                0.8644444346427917
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "84": [],
+    "85": [],
+    "86": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.550000011920929,
+                0.5811111330986023,
+                0.757777750492096,
+                0.7855555415153503
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "87": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.2177777737379074,
+                0.16333332657814026,
+                0.8788889050483704,
+                0.7333333492279053
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "88": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.653333306312561,
+                0.3166666626930237,
+                0.8155555725097656,
+                0.5199999809265137
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "89": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.11444444209337234,
+                0.1411111056804657,
+                0.7044444680213928,
+                0.7655555605888367
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "90": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.44777777791023254,
+                0.2911111116409302,
+                0.8622221946716309,
+                0.8666666746139526
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "91": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.0,
+                0.37444445490837097,
+                0.4655555486679077,
+                0.5566666722297668
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "92": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.16555555164813995,
+                0.1088888868689537,
+                0.8622221946716309,
+                0.6966666579246521
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "93": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.23333333432674408,
+                0.49222221970558167,
+                0.8844444155693054,
+                0.9055555462837219
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "94": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.2199999988079071,
+                0.5844444632530212,
+                0.3266666531562805,
+                0.7077777981758118
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "95": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.0,
+                0.2933333218097687,
+                0.5111111402511597,
+                0.8255555629730225
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "96": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.3633333444595337,
+                0.6766666769981384,
+                0.7233333587646484,
+                0.8277778029441833
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "97": [],
+    "98": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.18000000715255737,
+                0.2222222238779068,
+                0.3822222352027893,
+                0.695555567741394
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "99": [],
+    "100": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.29777777194976807,
+                0.3844444453716278,
+                0.7233333587646484,
+                0.6577777862548828
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "101": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.4977777898311615,
+                0.7055555582046509,
+                0.6311110854148865,
+                0.804444432258606
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "102": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.4633333384990692,
+                0.5299999713897705,
+                0.7588889002799988,
+                0.9755555391311646
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "103": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.6922222375869751,
+                0.35777777433395386,
+                0.8311111330986023,
+                0.648888885974884
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "104": [],
+    "105": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.18111111223697662,
+                0.18444444239139557,
+                0.5566666722297668,
+                0.5899999737739563
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "106": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.2822222113609314,
+                0.29777777194976807,
+                0.7255555391311646,
+                0.7355555295944214
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "107": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.2822222113609314,
+                0.29555556178092957,
+                0.7211111187934875,
+                0.7388888597488403
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "108": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.324444442987442,
+                0.1666666716337204,
+                0.7933333516120911,
+                0.371111124753952
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "109": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.6277777552604675,
+                0.47111111879348755,
+                0.8033333420753479,
+                0.7099999785423279
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "110": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.3655555546283722,
+                0.7088888883590698,
+                0.6322222352027893,
+                0.8577777743339539
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "111": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.11555555462837219,
+                0.21666666865348816,
+                0.8455555438995361,
+                0.8844444155693054
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "112": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.3544444441795349,
+                0.09222222119569778,
+                0.8488888740539551,
+                0.6511111259460449
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "113": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.653333306312561,
+                0.3166666626930237,
+                0.8155555725097656,
+                0.5199999809265137
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "114": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.15222221612930298,
+                0.17444443702697754,
+                0.7244444489479065,
+                0.6200000047683716
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "115": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.3422222137451172,
+                0.6933333277702332,
+                0.6588888764381409,
+                0.8288888931274414
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "116": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.17666666209697723,
+                0.39888888597488403,
+                0.28999999165534973,
+                0.6455555558204651
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "117": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.16111111640930176,
+                0.32555556297302246,
+                0.4611110985279083,
+                0.8055555820465088
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "118": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.1322222203016281,
+                0.25999999046325684,
+                0.8588888645172119,
+                0.8866666555404663
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "119": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.28333333134651184,
+                0.2866666615009308,
+                0.7077777981758118,
+                0.7044444680213928
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "120": [],
+    "121": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.5244444608688354,
+                0.5877777934074402,
+                0.757777750492096,
+                0.8022222518920898
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "122": [],
+    "123": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.29777777194976807,
+                0.2988888919353485,
+                0.6833333373069763,
+                0.6800000071525574
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "124": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.15000000596046448,
+                0.18666666746139526,
+                0.476666659116745,
+                0.6733333468437195
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "125": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.2888889014720917,
+                0.26555556058883667,
+                0.7322221994400024,
+                0.7077777981758118
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "126": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.38555556535720825,
+                0.2933333218097687,
+                0.6644444465637207,
+                0.7144444584846497
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "127": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.504444420337677,
+                0.652222216129303,
+                0.79666668176651,
+                0.8088889122009277
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "128": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.14000000059604645,
+                0.1366666704416275,
+                0.8577777743339539,
+                0.6299999952316284
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "129": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.3566666543483734,
+                0.70333331823349,
+                0.644444465637207,
+                0.8199999928474426
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "130": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.17888888716697693,
+                0.2222222238779068,
+                0.3977777659893036,
+                0.5177778005599976
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "131": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.041111111640930176,
+                0.03999999910593033,
+                0.8377777934074402,
+                0.9399999976158142
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "132": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.18222221732139587,
+                0.24444444477558136,
+                0.8666666746139526,
+                0.8888888955116272
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "133": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.3222222328186035,
+                0.3144444525241852,
+                0.7022222280502319,
+                0.699999988079071
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "134": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.185555562376976,
+                0.5022222399711609,
+                0.32555556297302246,
+                0.7611111402511597
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "135": [],
+    "136": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.1688888818025589,
+                0.4277777671813965,
+                0.7366666793823242,
+                0.8388888835906982
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "137": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.28333333134651184,
+                0.2866666615009308,
+                0.7077777981758118,
+                0.7044444680213928
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "138": [],
+    "139": [],
+    "140": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.4444444477558136,
+                0.3077777922153473,
+                0.7322221994400024,
+                1.0
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "141": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.504444420337677,
+                0.652222216129303,
+                0.79666668176651,
+                0.8088889122009277
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "142": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.17666666209697723,
+                0.26555556058883667,
+                0.3544444441795349,
+                0.6666666865348816
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "143": [
+        {
+            "class_id": 3,
+            "class_text": "contamination",
+            "bounding_box": [
+                0.28333333134651184,
+                0.2933333218097687,
+                0.7255555391311646,
+                0.7377777695655823
+            ],
+            "class_id_original": -1,
+            "class_text_original": "contamination"
+        }
+    ],
+    "144": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.23111110925674438,
+                0.6755555272102356,
+                0.44555556774139404,
+                0.8111110925674438
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "145": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.15777777135372162,
+                0.2199999988079071,
+                0.7233333587646484,
+                0.8600000143051147
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ],
+    "146": [
+        {
+            "class_id": 2,
+            "class_text": "broken_small",
+            "bounding_box": [
+                0.25,
+                0.6733333468437195,
+                0.5844444632530212,
+                0.8166666626930237
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_small"
+        }
+    ],
+    "147": [
+        {
+            "class_id": 1,
+            "class_text": "broken_large",
+            "bounding_box": [
+                0.2011111080646515,
+                0.35777777433395386,
+                0.8577777743339539,
+                0.8877778053283691
+            ],
+            "class_id_original": -1,
+            "class_text_original": "broken_large"
+        }
+    ]
+}

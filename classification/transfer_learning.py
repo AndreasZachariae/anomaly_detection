@@ -13,11 +13,6 @@ from tensorflow.keras.models import Model, load_model
 import json
 from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
 import numpy as np
-# import seaborn as sns
-# from make_confusion_matrix import make_confusion_matrix
-
-
-
 
 
 class TransferLearning():
@@ -184,26 +179,33 @@ class TransferLearning():
             plt.savefig(path)
 
     def plot_confusion_matrix(self, metric_path):
+        y_pred = []
+        y_true = []
 
-        predictions = self.model.predict(self.val_dataset, verbose=1)
-        y_pred = tf.math.argmax(predictions, 1).numpy()
-        y_true = np.concatenate([y for x, y in self.val_dataset], axis=0)
-        # print(y_pred)
-        # print(y_true)
+        for x, y in self.val_dataset:
+            if len(x) > 1:
+                print("Batch size has to be 1")
+                return
+            predictions = self.model.predict(x, verbose=1)
+            y_pred.append(tf.math.argmax(predictions, 1).numpy()[0])
+            y_true.append(y.numpy()[0])
 
-        cf_matrix = confusion_matrix(y_true, y_pred)
+        cf_matrix = confusion_matrix(y_true, y_pred, normalize="all")
+        # cf_matrix = np.array([[0.15706806, 0.11518325, 0.,         0.],
+        #                       [0.,         0.19371728, 0.06282723, 0.01570681],
+        #                       [0.,   0.0104712, 0.20418848, 0.05759162],
+        #                       [0.,    0.,     0.,    0.18324607]])
+        accuracy = accuracy_score(y_true, y_pred)
         print(cf_matrix)
-        disp = ConfusionMatrixDisplay.from_predictions(y_true, 
-                                                        y_pred, 
-                                                        display_labels=self.labels, 
-                                                        cmap=plt.cm.Blues,
-                                                        normalize="all")
-        disp.ax_.set_title("Confusion Matrix")
+        print(accuracy)
 
-        plt.show()
-        path = os.path.join(metric_path, self.model.name + "_matrix_acc" + str(round(self.val_accuracy[-1]*100)))
+        disp = ConfusionMatrixDisplay(confusion_matrix=cf_matrix,
+                                      display_labels=self.labels)
+        # disp.ax_.set_title("Confusion Matrix")
+
+        disp.plot(cmap=plt.cm.Blues)
+        path = os.path.join(metric_path, self.model.name + "_matrix_acc" + str(round(accuracy*100)) + ".png")
         plt.savefig(path)
-
 
     def save_model(self):
         """Wrapper for Keras Model save function
@@ -255,7 +257,7 @@ def main():
 
     for type_name in types:
         images_path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", type_name)
-        model_path = os.path.join(os.getcwd(), "models", "transfer_learning", "old")
+        model_path = os.path.join(os.getcwd(), "models", "transfer_learning", type_name)
 
         if load_model:
             models = [model_name for model_name in os.listdir(model_path) if model_name.endswith(".h5")]
@@ -264,7 +266,6 @@ def main():
                                          model_path=model_path,
                                          load_model_name=model_name,
                                          only_cpu=True)
-                
 
                 # if type_name == "bottle":
                 #     test_image_path = os.path.join(images_path, "validate", "images", "contamination", "013.png")
@@ -274,7 +275,7 @@ def main():
                 # prediction, class_index, class_name, image = model.predict(test_image_path)
                 model.load_data(image_path=images_path,
                                 image_size=(900, 900),
-                                batch_size=8)
+                                batch_size=1)
 
                 # model.evaluate()
                 model.plot_confusion_matrix(metric_path=model_path)
@@ -284,23 +285,19 @@ def main():
                 # cv2.waitKey(0)
 
         else:
-            # Best learning rates:
-            # mobilenetv2 = 0.0005
-            # resnet50 = 0.001
-            # inceptionresnetv2 = 0.005
             for model_name, learning_rate, epochs in [("mobilenetv2", 0.001, 10),
-                                                      ("inceptionresnetv2", 0.001, 10),
-                                                      ("resnet50", 0.001, 10)]:
+                                                      ("resnet50", 0.001, 10),
+                                                      ("inceptionresnetv2", 0.001, 10)]:
                 print(model_name, learning_rate, epochs)
 
                 model = TransferLearning(model_path=model_path,
                                          type_name=type_name,
                                          base_model=model_name,
-                                         only_cpu=True)
+                                         only_cpu=False)
 
                 model.load_data(image_path=images_path,
                                 image_size=(900, 900),
-                                batch_size=4)
+                                batch_size=32)
 
                 # model.show_example_images()
                 model.train(learning_rate, epochs)
@@ -315,6 +312,8 @@ def main():
                 model.plot_metrics(metric_path=model_path)
                 # model.evaluate()
                 model.save_model()
+
+                model.plot_confusion_matrix(metric_path=model_path)
 
 
 if __name__ == "__main__":

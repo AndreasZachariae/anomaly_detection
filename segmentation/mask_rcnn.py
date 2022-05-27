@@ -161,80 +161,82 @@ class MaskRCNN():
         y_pred = []
         y_pred_prob = [0, 0]
         good_class_id = self.labels.index("good")
+        annotations_dict = self.load_annotation_json(images_path)
 
-        for class_name in os.listdir(images_path):
-            for image_name in os.listdir(os.path.join(images_path, class_name)):
-                image_path = os.path.join(images_path, class_name, image_name)
-                predictions = self.predict(image_path, threshold)
-                annotations = self.load_annotation(image_path)
+        # for class_name in os.listdir(images_path):
+        for image_name in os.listdir(os.path.join(images_path)):
+            if not image_name.endswith(".jpg"):
+                continue
+            image_path = os.path.join(images_path, image_name)
+            predictions = self.predict(image_path, threshold)
 
-                num_pred = len(predictions)
-                num_true = len(annotations)
-                print(num_pred, num_true)
+            # -- Use single XML files or one JSON
+            # annotations = self.load_annotation_xml(image_path)
+            annotations = annotations_dict[image_name.split(".")[0]]
 
-                if num_true == 0 and num_pred == 0:
-                    y_true.append(good_class_id)
+            num_pred = len(predictions)
+            num_true = len(annotations)
+            print(num_pred, num_true)
+
+            if num_true == 0 and num_pred == 0:
+                y_true.append(good_class_id)
+                y_pred.append(good_class_id)
+
+            if num_pred < num_true:
+                max_objects = range(num_true)
+            else:
+                max_objects = range(num_pred)
+
+            for index in max_objects:
+                if index >= num_pred:
                     y_pred.append(good_class_id)
-
-                if num_pred < num_true:
-                    max_objects = range(num_true)
+                    y_true.append(annotations[index]["class_id"])
+                elif index >= num_true:
+                    y_true.append(good_class_id)
+                    y_pred.append(predictions[index]["class_id"])
+                    y_pred_prob[0] += predictions[index]["probability"]
+                    y_pred_prob[1] += 1
                 else:
-                    max_objects = range(num_pred)
+                    y_true.append(annotations[index]["class_id"])
+                    y_pred.append(predictions[index]["class_id"])
+                    y_pred_prob[0] += predictions[index]["probability"]
+                    y_pred_prob[1] += 1
 
-                for index in max_objects:
-                    if index >= num_pred:
-                        y_pred.append(good_class_id)
-                        y_true.append(annotations[index]["true_class_id"])
-                    elif index >= num_true:
-                        y_true.append(good_class_id)
-                        y_pred.append(predictions[index]["class_id"])
-                        y_pred_prob[0] += predictions[index]["probability"]
-                        y_pred_prob[1] += 1
-                    else:
-                        y_true.append(annotations[index]["true_class_id"])
-                        y_pred.append(predictions[index]["class_id"])
-                        y_pred_prob[0] += predictions[index]["probability"]
-                        y_pred_prob[1] += 1
+            # print(predictions[index]["class_id"], annotations[index]["true_class_id"])
+            # print(y_pred)
+            # print(y_true)
+            # if not y_pred_prob[1] == 0:
+            #     print("mean_prob", y_pred_prob[0]/(y_pred_prob[1]))
 
-                # print(predictions[index]["class_id"], annotations[index]["true_class_id"])
-                print(y_pred)
-                print(y_true)
-                if not y_pred_prob[1] == 0:
-                    print("mean_prob", y_pred_prob[0]/(y_pred_prob[1]))
-
-            break
-
-        print(accuracy_score(y_true, y_pred))
+        print("accuracy", accuracy_score(y_true, y_pred))
         print("mean_prob", y_pred_prob[0]/(y_pred_prob[1]))
 
         return y_true, y_pred
 
     def plot_confusion_matrix(self, y_true, y_pred, metric_path):
-        cf_matrix = confusion_matrix(self.y_test, self.y_pred_test)
+        cf_matrix = confusion_matrix(y_true, y_pred, normalize="all")
+        accuracy = accuracy_score(y_true, y_pred)
+        print(accuracy)
         print(cf_matrix)
 
-        disp = ConfusionMatrixDisplay.from_predictions(y_true, 
-                                                        y_pred, 
-                                                        display_labels=self.labels, 
-                                                        cmap=plt.cm.Blues,
-                                                        normalize=True)
-        disp.ax_.set_title("Confusion Matrix")
+        disp = ConfusionMatrixDisplay(confusion_matrix=cf_matrix,
+                                      display_labels=self.labels)
+        # disp.ax_.set_title("Confusion Matrix")
 
-        print(disp.confusion_matrix)
-        plt.show()
-        path = os.path.join(metric_path, "cf_matrix")
+        disp.plot(cmap=plt.cm.Blues)
+        path = os.path.join(metric_path, "cf_matrix_acc" + str(round(accuracy*100, 0)) + ".png")
         plt.savefig(path)
 
-    def load_annotation(self, test_image_path):
+    def load_annotation_xml(self, test_image_path):
         xml_path = test_image_path.replace("images", "ground_truth").replace(".png", "_mask.xml")
-        tree = ET.parse(xml_path) 
+        tree = ET.parse(xml_path)
         root = tree.getroot()
-            
+
         annotations = []
 
         for member in root.findall('object'):
-            true_class_name = member[0].text # class name
-        
+            true_class_name = member[0].text  # class name
+
             # bbox coordinates
             xmin = int(member[4][0].text)
             ymin = int(member[4][1].text)
@@ -246,6 +248,12 @@ class MaskRCNN():
                                 "true_bounding_box": [xmin, ymin, xmax, ymax]})
 
         return annotations
+
+    def load_annotation_json(self, images_path):
+        with open(os.path.join(images_path, "labels.json")) as f:
+            data_dict = json.load(f)
+            # print(data_dict["0"])
+        return data_dict
 
     def show_image(self, image):
         plt.figure()
@@ -296,19 +304,21 @@ def convert_from_image_to_cv2(img: PIL.Image):
 
 def main():
     type_name = "bottle"
-    images_path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", type_name, "validate", "images")
+    # images_path = os.path.join(os.getcwd(), "dataset", "augmented_dataset", type_name, "validate", "images")
+    images_path = os.path.join(os.getcwd(), "models", "mask_rcnn", "eval_data")
     test_image_path = os.path.join(images_path, "contamination", "013.png")
-    model_path = os.path.join(os.getcwd(), "models", "mask_rcnn", "1")
+
+    model_path = os.path.join(os.getcwd(), "models", "mask_rcnn")
 
     model = MaskRCNN(model_path=os.path.join(model_path, "saved_model"),
                      label_path=os.path.join(model_path, "labels.json"),
                      type_name=type_name,
-                     only_cpu=True)
+                     only_cpu=False)
 
     # detections = model.predict(test_image_path, threshold=0.5)
 
     # np.save("./predictions.npy", detections)
-    detections_file = np.load("./predictions.npy", allow_pickle=True)
+    # detections_file = np.load("./predictions.npy", allow_pickle=True)
 
     # print(detections_file)
 
