@@ -499,13 +499,15 @@ class Ensemble():
                                                        y_pred,
                                                        display_labels=labels, 
                                                        cmap=plt.cm.Blues,
-                                                       normalize="all")
+                                                       normalize="all",
+                                                       xticks_rotation="vertical")
         disp.ax_.set_title("Confusion Matrix")
+        plt.tight_layout()
         plt.savefig(filepath)
         
 
 def main():
-    load_all = False
+    load_all = True
     load_data = False
     
     type_name = "bottle"
