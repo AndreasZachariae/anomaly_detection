@@ -308,28 +308,27 @@ def main():
     images_path = os.path.join(os.getcwd(), "models", "mask_rcnn", "eval_data")
     test_image_path = os.path.join(images_path, "contamination", "013.png")
 
-    for model_number in ["1", "2", "3", "4", "5", "6", "7", "8"]:
-        model_path = os.path.join(os.getcwd(), "models", "mask_rcnn", model_number)
+    model_path = os.path.join(os.getcwd(), "models", "mask_rcnn")
 
-        model = MaskRCNN(model_path=os.path.join(model_path, "saved_model"),
-                         label_path=os.path.join(model_path, "labels.json"),
-                         type_name=type_name,
-                         only_cpu=False)
+    model = MaskRCNN(model_path=os.path.join(model_path, "saved_model"),
+                     label_path=os.path.join(model_path, "labels.json"),
+                     type_name=type_name,
+                     only_cpu=False)
 
-        # detections = model.predict(test_image_path, threshold=0.5)
+    # detections = model.predict(test_image_path, threshold=0.5)
 
-        # np.save("./predictions.npy", detections)
-        # detections_file = np.load("./predictions.npy", allow_pickle=True)
+    # np.save("./predictions.npy", detections)
+    # detections_file = np.load("./predictions.npy", allow_pickle=True)
 
-        # print(detections_file)
+    # print(detections_file)
 
-        # model.visualize(test_image_path, detections_file)
+    # model.visualize(test_image_path, detections_file)
 
-        y_true, y_pred = model.evaluate(images_path)
+    y_true, y_pred = model.evaluate(images_path)
 
-        model.plot_confusion_matrix(y_true, y_pred, metric_path=model_path)
+    model.plot_confusion_matrix(y_true, y_pred, metric_path=model_path)
 
-        # masks = model.infer_on_webserver("http://iras-w06o:9930", os.path.join(path, "broken_small", "001.png"))
+    # masks = model.infer_on_webserver("http://iras-w06o:9930", os.path.join(path, "broken_small", "001.png"))
 
 
 if __name__ == '__main__':
