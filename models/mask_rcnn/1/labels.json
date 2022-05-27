@@ -4,5 +4,6 @@
         "broken_large",
         "broken_small",
         "contamination"
-    ]
+    ],
+    "mean_prob": 0.9892439626845992
 }
