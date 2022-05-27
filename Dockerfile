@@ -10,6 +10,11 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     python3-tk \
     ffmpeg libsm6 libxext6 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-RUN pip install pandas matplotlib opencv-contrib-python
+
+RUN pip install \
+    pandas \
+    matplotlib \
+    opencv-contrib-python \
+    scikit-learn
 
 CMD /bin/bash
