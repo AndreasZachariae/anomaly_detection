@@ -191,17 +191,12 @@ class TransferLearning():
             y_true.append(y.numpy()[0])
 
         cf_matrix = confusion_matrix(y_true, y_pred, normalize="all")
-        # cf_matrix = np.array([[0.15706806, 0.11518325, 0.,         0.],
-        #                       [0.,         0.19371728, 0.06282723, 0.01570681],
-        #                       [0.,   0.0104712, 0.20418848, 0.05759162],
-        #                       [0.,    0.,     0.,    0.18324607]])
         accuracy = accuracy_score(y_true, y_pred)
         print(cf_matrix)
         print(accuracy)
 
         disp = ConfusionMatrixDisplay(confusion_matrix=cf_matrix,
                                       display_labels=self.labels)
-        # disp.ax_.set_title("Confusion Matrix")
 
         disp.plot(cmap=plt.cm.Blues)
         path = os.path.join(metric_path, self.model.name + "_matrix_acc" + str(round(accuracy*100)) + ".png")
