@@ -4,5 +4,13 @@
         "broken_large",
         "broken_small",
         "contamination"
-    ]
+    ],
+    "accuracy": 0.9423076923076923,
+    "mean_iou": 0.8094062661264397,
+    "mAP": 0.9648,
+    "mAP@.50IOU": 0.9894,
+    "mAP/broken_large": 0.9818,
+    "mAP/broken_small": 0.9455,
+    "mAP/contamination": 0.9672,
+    "training_epochs": 64
 }

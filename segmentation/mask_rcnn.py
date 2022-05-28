@@ -78,32 +78,54 @@ class MaskRCNN():
 
         return detections
 
-    def visualize(self, image_path, detections):
+    def visualize(self, image_path, detections, annotations=None):
         image = cv2.imread(image_path)
 
         image = self.draw_bounding_boxes(image, detections)
-        image, mask = self.draw_mask(image, detections)
+        # image, mask = self.draw_mask(image, detections)
 
-        self.show_image(image)
-        self.show_image(mask)
+        if annotations is not None:
+            image = self.draw_bounding_boxes(image, annotations, is_true_label=True)
+            # image, mask = self.draw_mask(image, annotations)
+
+        # self.show_image(image)
+        # self.show_image(mask)
+        self.save_image(image, image_path.replace("eval_data", "images_box_overlay"))
 
         return image
 
-    def draw_bounding_boxes(self, image, detections):
+    def draw_bounding_boxes(self, image, detections, is_true_label=False):
         for detection in detections:
+            if is_true_label:
+                color = (0, 255, 0)
+                class_name = detection["class_text"]
+                probability = ""
+                y1, x1, y2, x2 = self.get_box_coords(image.shape, detection)
+                cv2.putText(img=image,
+                            text="IoU " + str(round(detection["iou"], 2)),
+                            org=(x1+2, y1+25),
+                            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                            fontScale=1,
+                            color=color,
+                            thickness=2,
+                            lineType=2)
 
-            x1, y1, x2, y2 = self.get_box_coords(image.shape, detection)
+            else:
+                color = (0, 0, 255)
+                class_name = detection["class_name"]
+                probability = " " + str(round(detection["probability"]*100)) + "%"
+                x1, y1, x2, y2 = self.get_box_coords(image.shape, detection)
 
-            image = cv2.rectangle(image, (x1, y1), (x2, y2), (0, 0, 255), 2)
+            image = cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
 
-            text = str(detection["class_name"]) + " " + str(round(detection["probability"]*100)) + "%"
+            text = class_name + probability
 
             cv2.putText(img=image,
                         text=text,
-                        org=(x1, y1-3),
+                        org=(x1+2, y1-4),
                         fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         fontScale=1,
-                        color=(0, 0, 255),
+                        color=color,
                         thickness=2,
                         lineType=2)
 
@@ -114,7 +136,7 @@ class MaskRCNN():
 
         for detection in detections:
             mask = detection["mask"].astype(np.float32)
-            self.show_image(mask)
+            # self.show_image(mask)
 
             x1, y1, x2, y2 = self.get_box_coords(image.shape, detection)
 
@@ -129,7 +151,7 @@ class MaskRCNN():
             # mask_binary = mask_binary.astype(np.uint8)
 
             mask_binary *= 255
-            self.show_image(mask_binary)
+            # self.show_image(mask_binary)
 
             image_box = image[y1:y2, x1:x2, :]
 
@@ -159,8 +181,7 @@ class MaskRCNN():
     def evaluate(self, images_path, threshold=0.5):
         y_true = []
         y_pred = []
-        y_pred_prob = [0, 0]
-        good_class_id = self.labels.index("good")
+        iou = []
         annotations_dict = self.load_annotation_json(images_path)
 
         # for class_name in os.listdir(images_path):
@@ -174,44 +195,82 @@ class MaskRCNN():
             # annotations = self.load_annotation_xml(image_path)
             annotations = annotations_dict[image_name.split(".")[0]]
 
-            num_pred = len(predictions)
-            num_true = len(annotations)
-            print(num_pred, num_true)
+            y_pred_objects, y_true_objects, iou_objects = self.get_true_pred_pair(image_path, annotations, predictions)
+            y_true.extend(y_true_objects)
+            y_pred.extend(y_pred_objects)
+            iou.extend(iou_objects)
 
-            if num_true == 0 and num_pred == 0:
-                y_true.append(good_class_id)
-                y_pred.append(good_class_id)
+            self.visualize(image_path, predictions, annotations)
 
-            if num_pred < num_true:
-                max_objects = range(num_true)
-            else:
-                max_objects = range(num_pred)
+        accuracy = accuracy_score(y_true, y_pred)
+        mean_iou = sum(iou) / len(iou)
 
-            for index in max_objects:
-                if index >= num_pred:
-                    y_pred.append(good_class_id)
-                    y_true.append(annotations[index]["class_id"])
-                elif index >= num_true:
-                    y_true.append(good_class_id)
-                    y_pred.append(predictions[index]["class_id"])
-                    y_pred_prob[0] += predictions[index]["probability"]
-                    y_pred_prob[1] += 1
-                else:
-                    y_true.append(annotations[index]["class_id"])
-                    y_pred.append(predictions[index]["class_id"])
-                    y_pred_prob[0] += predictions[index]["probability"]
-                    y_pred_prob[1] += 1
-
-            # print(predictions[index]["class_id"], annotations[index]["true_class_id"])
-            # print(y_pred)
-            # print(y_true)
-            # if not y_pred_prob[1] == 0:
-            #     print("mean_prob", y_pred_prob[0]/(y_pred_prob[1]))
-
-        print("accuracy", accuracy_score(y_true, y_pred))
-        print("mean_prob", y_pred_prob[0]/(y_pred_prob[1]))
+        print("accuracy=" + str(accuracy) + " mean_iou=" + str(mean_iou))
 
         return y_true, y_pred
+
+    def get_true_pred_pair(self, image_path, annotations, predictions):
+        y_true = []
+        y_pred = []
+        iou = []
+        good_class_id = self.labels.index("good")
+        num_pred = len(predictions)
+        num_true = len(annotations)
+
+        if num_true == 0 and num_pred == 0:
+            y_true.append(good_class_id)
+            y_pred.append(good_class_id)
+
+        if num_pred < num_true:
+            max_objects = range(num_true)
+        else:
+            max_objects = range(num_pred)
+
+        for index in max_objects:
+            if index >= num_pred:
+                y_pred.append(good_class_id)
+                y_true.append(annotations[index]["class_id"])
+                iou.append(0)
+                annotations[index]["iou"] = 0
+            elif index >= num_true:
+                y_true.append(good_class_id)
+                y_pred.append(predictions[index]["class_id"])
+                iou.append(0)
+            else:
+                y_true.append(annotations[index]["class_id"])
+                y_pred.append(predictions[index]["class_id"])
+                iou_value = self.intersection_over_union(image_path, annotations[index], predictions[index])
+                iou.append(iou_value)
+                annotations[index]["iou"] = iou_value
+
+        print(num_pred, num_true, iou)
+
+        return y_pred, y_true, iou
+
+    def intersection_over_union(self, image_path, annotations, predictions):
+        image = cv2.imread(image_path)
+        true_y1, true_x1, true_y2, true_x2 = self.get_box_coords(image.shape, annotations)
+        pred_x1, pred_y1, pred_x2, pred_y2 = self.get_box_coords(image.shape, predictions)
+
+        # determine the (x, y)-coordinates of the intersection rectangle
+        xA = max(true_x1, pred_x1)
+        yA = max(true_y1, pred_y1)
+        xB = min(true_x2, pred_x2)
+        yB = min(true_y2, pred_y2)
+
+        # compute the area of intersection rectangle
+        interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
+
+        # compute the area of both the prediction and ground-truth rectangles
+        boxAArea = (true_x2 - true_x1 + 1) * (true_y2 - true_y1 + 1)
+        boxBArea = (pred_x2 - pred_x1 + 1) * (pred_y2 - pred_y1 + 1)
+
+        # compute the intersection over union by taking the intersection
+        # area and dividing it by the sum of prediction + ground-truth
+        # areas - the interesection area
+        iou = interArea / float(boxAArea + boxBArea - interArea)
+
+        return iou
 
     def plot_confusion_matrix(self, y_true, y_pred, metric_path):
         cf_matrix = confusion_matrix(y_true, y_pred, normalize="all")
@@ -259,8 +318,11 @@ class MaskRCNN():
         plt.figure()
         plt.imshow(image)
         plt.show()
-        # cv2.imshow("bboxes", image)
+        # cv2.imshow("overlays", image)
         # cv2.waitKey(0)
+
+    def save_image(self, image, image_path):
+        cv2.imwrite(image_path, image)
 
     def infer_on_webserver(self, webserver_uri, image_path):
         image = PIL.Image.open(image_path)
@@ -319,8 +381,6 @@ def main():
 
     # np.save("./predictions.npy", detections)
     # detections_file = np.load("./predictions.npy", allow_pickle=True)
-
-    # print(detections_file)
 
     # model.visualize(test_image_path, detections_file)
 
