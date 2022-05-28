@@ -1,0 +1,21 @@
+# ---- New Metrics with correct HAZELNUT dataset ----
+accuracy:
+	meta learner: 0.9397590361445783
+	hard voting: 0.3293172690763052
+	soft voting: 0.3333333333333333
+	weighted voting: 0.3333333333333333
+precision:
+	meta learner: 0.9450608556675683
+	hard voting: 0.28452112270143015
+	soft voting: 0.2925502877310106
+	weighted voting: 0.29117340441906997
+recall:
+	meta learner: 0.9397590361445783
+	hard voting: 0.3293172690763052
+	soft voting: 0.3333333333333333
+	weighted voting: 0.3333333333333333
+f1:
+	meta learner: 0.9399962710633084
+	hard voting: 0.30134530942023624
+	soft voting: 0.30880970691275744
+	weighted voting: 0.30768052402024626

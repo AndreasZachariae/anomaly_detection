@@ -1,0 +1,21 @@
+# ---- New Metrics with correct BOTTLE dataset ----
+accuracy:
+    meta learner: 0.7539267015706806
+    hard voting: 0.7068062827225131
+    soft voting: 0.7015706806282722
+    weighted voting: 0.6963350785340314
+precision:
+    meta learner: 0.7866320407776655
+    hard voting: 0.8299031509399517
+    soft voting: 0.8416311027028611
+    weighted voting: 0.8453174605458956
+recall:
+    meta learner: 0.7539267015706806
+    hard voting: 0.7068062827225131
+    soft voting: 0.7015706806282722
+    weighted voting: 0.6963350785340314
+f1:
+    meta learner: 0.748060258162387
+    hard voting: 0.6809682222502191
+    soft voting: 0.6716817437556772
+    weighted voting: 0.668575400553556
