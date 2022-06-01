@@ -47,8 +47,7 @@ Different methods for anomaly detection on the MVTec dataset
 
 1. SIFT feature detector
 2. k-means clustering
-3. SVM classificator
-4. Radial base function
+3. SVM classifier with radial basis function kernel
 
 ### Ensemble
 
@@ -57,7 +56,7 @@ Combined prediction from all previously trained models.
 Trained on unseen dataset 'validate'
 
 - Hard voting (Simple majority vote)
-- Soft voting (max sum of prediction probabilities)
+- Soft voting (argmax of the sum of prediction probabilities)
 - Weighted voting (weighted prediction with their model accuracy)
 - Meta Learner (SVM trained on predictions of the first models)
 
